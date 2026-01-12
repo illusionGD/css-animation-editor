@@ -9,7 +9,7 @@
 * **前端框架**: **Vue 3** + **TypeScript** + **Vite**。Vue 3 的响应式系统（Reactivity System）非常适合处理动画编辑器中高频变化的状态，且 Composition API 代码组织清晰。
 * **样式解决方案**: **Tailwind CSS**。提供原子化 CSS 能力，配合 Vue 的动态绑定非常灵活，内置 Dark Mode 支持，满足“好看”和“主题切换”的需求。
 * **状态管理**: **Pinia**。Vue 官方推荐的状态管理库，直观、类型安全，适合存储时间轴、关键帧、属性等全局数据。
-* **UI 组件库**: **Shadcn-Vue** (或类似基于 Tailwind 的 Vue 组件库)。用于快速搭建高颜值、风格统一的界面 (Dialog, Popover, Slider, Switch 等)。
+* **UI 组件库**: **Shadcn-Vue** (基于 Radix Vue 和 Tailwind)。用于快速搭建高颜值、风格统一的界面 (Dialog, Popover, Slider, Switch 等)。
 * **核心工具库**:
   * **VueUse**: 提供 `useDraggable`, `useStorage` 等实用组合式函数，简化交互逻辑。
   * **Cubic-bezier**: 用于贝塞尔曲线的可视化计算。
@@ -58,10 +58,12 @@
 ### Phase 1: 项目初始化与基础架构
 
 - [X]  使用 Vite 初始化 Vue 3 + TypeScript 项目
-- [X]  安装并配置 Tailwind CSS (开启 `class` 策略以支持 Dark Mode)
+- [X]  配置代码规范工具 (ESLint + Prettier)
+- [X]  安装并配置 Tailwind CSS (包含 tailwindcss-animate 插件)
 - [X]  配置 Pinia 状态管理
-- [X]  引入必要的 UI 组件库 (如 Shadcn-Vue) 和图标库 (Lucide-Vue)
-- [X]  搭建项目目录结构 (`views`, `components`, `stores`, `composables`)
+- [X]  引入 UI 组件库基础依赖 (Radix Vue, Lucide Vue, CVA, Clsx, Tailwind Merge)
+- [X]  初始化 Shadcn-Vue (`components.json`)
+- [X]  搭建项目目录结构 (`src/views`, `src/components`, `src/stores`, `src/composables`, `src/lib`)
 
 ### Phase 2: 界面框架搭建
 
