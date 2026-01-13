@@ -67,17 +67,30 @@
 
 ### Phase 2: 界面框架搭建
 
-- [ ]  实现全屏布局：Header + Sidebar + Canvas + Timeline
-- [ ]  实现 Header：包含 Dark Mode 切换开关 (使用 VueUse `useDark`)
-- [ ]  实现 Canvas 区域：绘制网格背景，放置预览目标元素
-- [ ]  实现 Timeline 基础容器和 Properties 面板容器
+- [x]  **基础设施调整**:
+    - [x] 卸载 Lucide-Vue, 安装 `@heroicons/vue`
+    - [x] 安装 Sass (`npm i -D sass`)，后续样式优先使用 SCSS
+- [x]  **布局组件 (Layout)**:
+    - [x] 创建 `EditorView.vue`，使用 Flexbox 实现全屏圣杯布局 (Header + Stage + Sidebar + Timeline)
+- [x]  **顶部导航栏 (Header)**:
+    - [x] 实现 Logo 展示与主题切换按钮 (使用 Heroicons `Sun/Moon` + VueUse `useDark`)
+- [x]  **画布区域 (Stage)**:
+    - [x] 实现 `TheStage.vue`，创建无限画布容器
+    - [x] 使用 CSS `conic-gradient` 绘制棋盘格背景
+    - [x] 放置居中的预览目标元素 (Target)
+- [x]  **面板容器**:
+    - [x] 实现 `PropertiesPanel.vue` (右侧属性面板容器)
+    - [x] 实现 `TheTimeline.vue` (底部时间轴容器)
+    - [x] 集成 Heroicons 图标 (如 `Adjustments`, `Clock`)
+- [x]  **路由整合**:
+    - [x] 在 `App.vue` 中挂载 `EditorView`
 
 ### Phase 3: 核心数据流与预览
 
-- [ ]  定义 Pinia Store：`useAnimationStore`，设计动画与关键帧的数据结构
-- [ ]  实现“属性编辑”组件：输入框/滑块控制 transform, opacity 等
-- [ ]  实现“实时预览”：根据当前选中关键帧的属性，动态更新 Canvas 中元素的样式
-- [ ]  实现 CSS 代码生成器：将 Store 数据转换为 CSS 字符串
+- [x]  定义 Pinia Store：`useAnimationStore`，设计动画与关键帧的数据结构
+- [x]  实现“属性编辑”组件：输入框/滑块控制 transform, opacity 等
+- [x]  实现“实时预览”：根据当前选中关键帧的属性，动态更新 Canvas 中元素的样式
+- [x]  实现 CSS 代码生成器：将 Store 数据转换为 CSS 字符串
 
 ### Phase 4: 时间轴与关键帧交互
 
