@@ -1,0 +1,58 @@
+# CSS动画可视化编辑器 - AI维护规则
+
+## 项目技术栈
+- Vue 3 + TypeScript
+- Vite 构建工具
+- Naive UI 组件库
+- Pinia 状态管理
+- ESLint + Prettier 代码规范
+- pnpm 包管理器
+- Sass CSS预处理器
+
+## 代码风格要求
+- 使用 TypeScript 严格模式
+- 组件使用 Composition API
+- 使用 `<script setup lang="ts">` 语法
+- 单文件组件使用 PascalCase 命名
+- 工具函数使用 camelCase 命名
+- 类型定义放在 `src/types/` 目录
+- Store 使用 Pinia，放在 `src/stores/` 目录
+
+## 组件开发规范
+- 组件文件使用 PascalCase，如 `CanvasElement.vue`
+- 组件 props 必须定义类型
+- 使用 `defineProps` 和 `defineEmits` 定义接口
+- 组件样式使用 scoped CSS
+- 复杂组件拆分为子组件
+
+## 文件命名规范
+- 组件文件：PascalCase，如 `PropertyPanel.vue`
+- 工具函数：camelCase，如 `formatValue.ts`
+- 类型定义：camelCase，如 `animationTypes.ts`
+- Store 文件：camelCase，如 `canvasStore.ts`
+
+## 导入路径规范
+- 使用 `@/` 别名导入，如 `import { useCanvasStore } from '@/stores/canvasStore'`
+- 相对路径仅用于同目录文件
+
+## 类型定义规范
+- 所有接口和类型定义在 `src/types/index.ts`
+- 使用 TypeScript 接口而非类型别名（除非需要联合类型）
+- 导出类型使用 `export interface` 或 `export type`
+
+## 常用工具函数位置
+- 动画相关：`src/utils/animation.ts`
+- 导出相关：`src/utils/exporters/`
+- 格式化相关：`src/utils/formatters.ts`
+- 计算相关：`src/utils/calculators.ts`
+
+## 数据存储
+- 使用 StorageAdapter 抽象层访问数据
+- 当前使用 LocalStorageAdapter
+- 后续可通过环境变量切换为 ApiStorageAdapter
+
+## 注意事项
+- 保持代码简洁，避免过度抽象
+- 性能优先，使用虚拟滚动处理大列表
+- 错误处理要完善，使用 try-catch
+- 注释要清晰，复杂逻辑必须注释

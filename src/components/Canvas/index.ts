@@ -1,0 +1,5 @@
+export { default as Canvas } from './Canvas.vue'
+export { default as CanvasGrid } from './CanvasGrid.vue'
+export { default as CanvasRuler } from './CanvasRuler.vue'
+export { default as CanvasElement } from './CanvasElement.vue'
+export { default as SelectionBox } from './SelectionBox.vue'
