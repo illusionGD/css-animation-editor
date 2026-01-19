@@ -14,7 +14,7 @@ export function exportJSON(projectName: string): Project {
     version: 1,
     data: {
       elements: canvasStore.elements,
-      animations: animationStore.tracks.map((track) => ({
+      animations: animationStore.tracks.map(track => ({
         duration: track.duration,
         delay: 0,
         iterations: 1,

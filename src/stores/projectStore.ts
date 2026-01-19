@@ -4,10 +4,12 @@ import type { Project } from '@/types'
 import { storageAdapter } from '@/services/storage'
 import { useCanvasStore } from './canvasStore'
 import { useAnimationStore } from './animationStore'
+import { useElementStore } from './elementStore'
 
 export const useProjectStore = defineStore('project', () => {
   const canvasStore = useCanvasStore()
   const animationStore = useAnimationStore()
+  const elementStore = useElementStore()
 
   const currentProject = ref<Project | null>(null)
   const projects = ref<Project[]>([])
@@ -57,7 +59,7 @@ export const useProjectStore = defineStore('project', () => {
         version: project.version + 1,
         data: {
           elements: canvasStore.elements,
-          animations: animationStore.tracks.map((track) => ({
+          animations: animationStore.tracks.map(track => ({
             duration: track.duration,
             delay: 0,
             iterations: 1,
@@ -91,7 +93,12 @@ export const useProjectStore = defineStore('project', () => {
       if (project) {
         currentProject.value = project
         // 恢复画布状态
-        canvasStore.elements = project.data.elements
+        // 清空现有元素
+        elementStore.clearAll()
+        // 恢复元素
+        project.data.elements.forEach(element => {
+          elementStore.createElement(element)
+        })
         canvasStore.updateCanvasConfig({
           width: project.data.settings.canvasWidth,
           height: project.data.settings.canvasHeight,
@@ -101,11 +108,11 @@ export const useProjectStore = defineStore('project', () => {
           showRuler: project.data.settings.showRuler
         })
         // 恢复动画状态
-        animationStore.tracks = project.data.animations.map((anim) => ({
-          property: 'transform',
-          keyframes: anim.keyframes,
-          duration: anim.duration
-        }))
+        // 注意：项目数据中的动画格式可能与当前格式不一致
+        // 如果需要恢复动画，需要根据实际数据结构来处理
+        // animationStore.elementTracks 是 Record<string, AnimationTrack[]>
+        // project.data.animations 是 AnimationConfig[]
+        // 暂时不恢复动画数据，因为格式不匹配
         updateRecentProjects()
       }
     } catch (error) {
@@ -126,9 +133,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function updateRecentProjects() {
-    recentProjects.value = projects.value
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .slice(0, 10)
+    recentProjects.value = projects.value.sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 10)
   }
 
   // 初始化

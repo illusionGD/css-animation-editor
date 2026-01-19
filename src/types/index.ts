@@ -14,6 +14,8 @@ export interface CanvasElement {
   name?: string
   visible?: boolean
   locked?: boolean
+  parentId?: string // 父元素ID，用于构建树形结构
+  order?: number // 同级元素的排序顺序
 }
 
 export interface AnimationConfig {

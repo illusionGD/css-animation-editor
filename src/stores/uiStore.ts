@@ -16,6 +16,7 @@ export const useUIStore = defineStore('ui', () => {
     defaultDuration: 3000,
     autoSave: true
   })
+  const autoKeyframe = ref(false) // 自动K帧开关
 
   // 方法
   function toggleTheme() {
@@ -62,6 +63,7 @@ export const useUIStore = defineStore('ui', () => {
         if (parsed.rightSidebarWidth) rightSidebarWidth.value = parsed.rightSidebarWidth
         if (parsed.timelineHeight) timelineHeight.value = parsed.timelineHeight
         if (parsed.settings) settings.value = { ...settings.value, ...parsed.settings }
+        if (typeof parsed.autoKeyframe === 'boolean') autoKeyframe.value = parsed.autoKeyframe
         // 修复主题加载：确保正确设置主题
         if (parsed.theme === 'light') {
           isDarkMode.value = false
@@ -84,7 +86,8 @@ export const useUIStore = defineStore('ui', () => {
           rightSidebarWidth: rightSidebarWidth.value,
           timelineHeight: timelineHeight.value,
           settings: settings.value,
-          theme: isDarkMode.value ? 'dark' : 'light'
+          theme: isDarkMode.value ? 'dark' : 'light',
+          autoKeyframe: autoKeyframe.value
         })
       )
     } catch (e) {
@@ -95,6 +98,11 @@ export const useUIStore = defineStore('ui', () => {
   // 初始化时加载
   loadFromLocalStorage()
 
+  function toggleAutoKeyframe() {
+    autoKeyframe.value = !autoKeyframe.value
+    saveToLocalStorage()
+  }
+
   return {
     // 状态
     theme,
@@ -103,6 +111,7 @@ export const useUIStore = defineStore('ui', () => {
     timelineHeight,
     leftSidebarTab,
     settings,
+    autoKeyframe,
     // 方法
     toggleTheme,
     setTheme,
@@ -110,6 +119,7 @@ export const useUIStore = defineStore('ui', () => {
     setRightSidebarWidth,
     setTimelineHeight,
     setLeftSidebarTab,
-    updateSettings
+    updateSettings,
+    toggleAutoKeyframe
   }
 })

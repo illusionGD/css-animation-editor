@@ -3,7 +3,7 @@ import { exportCSS } from './cssExporter'
 
 export function exportHTML(elements: CanvasElement[]): string {
   const css = exportCSS(elements)
-  
+
   let html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>

@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { formatDecimal } from '@/utils/formatters'
-import type { CanvasElement } from '@/types'
+import { useElementStore } from './elementStore'
 
 export const useCanvasStore = defineStore('canvas', () => {
+  const elementStore = useElementStore()
+
   // 状态
-  const elements = ref<CanvasElement[]>([])
-  const selectedElementIds = ref<string[]>([])
   const canvasConfig = ref({
     width: 1920,
     height: 1080,
@@ -16,57 +16,41 @@ export const useCanvasStore = defineStore('canvas', () => {
     showRuler: true,
     zoom: 1,
     offsetX: 20, // 默认偏移：为垂直标尺留出空间，使画布(0,0)对齐标尺(0,0)
-    offsetY: 20  // 默认偏移：为水平标尺留出空间，使画布(0,0)对齐标尺(0,0)
+    offsetY: 20 // 默认偏移：为水平标尺留出空间，使画布(0,0)对齐标尺(0,0)
   })
 
-  // 计算属性
-  const selectedElements = computed(() => {
-    return elements.value.filter((el) => selectedElementIds.value.includes(el.id))
-  })
+  // 计算属性：从 elementStore 获取元素数据（保持向后兼容）
+  const elements = computed(() => elementStore.elementsArray)
+  const selectedElementIds = computed(() => elementStore.selectedElementIds)
+  const selectedElements = computed(() => elementStore.selectedElements)
+  const hasSelection = computed(() => elementStore.hasSelection)
 
-  const hasSelection = computed(() => selectedElementIds.value.length > 0)
-
-  // 方法
-  function addElement(element: CanvasElement) {
-    elements.value.push(element)
+  // 方法：代理到 elementStore（保持向后兼容）
+  function addElement(element: Parameters<typeof elementStore.createElement>[0]) {
+    elementStore.createElement(element)
   }
 
   function removeElement(elementId: string) {
-    const index = elements.value.findIndex((el) => el.id === elementId)
-    if (index >= 0) {
-      elements.value.splice(index, 1)
-      deselectElement(elementId)
-    }
+    elementStore.deleteElement(elementId)
   }
 
-  function updateElement(elementId: string, updates: Partial<CanvasElement>) {
-    const element = elements.value.find((el) => el.id === elementId)
-    if (element) {
-      Object.assign(element, updates)
-    }
+  function updateElement(
+    elementId: string,
+    updates: Parameters<typeof elementStore.updateElement>[1]
+  ) {
+    elementStore.updateElement(elementId, updates)
   }
 
-  function selectElement(elementId: string, multi = false) {
-    if (multi) {
-      if (selectedElementIds.value.includes(elementId)) {
-        deselectElement(elementId)
-      } else {
-        selectedElementIds.value.push(elementId)
-      }
-    } else {
-      selectedElementIds.value = [elementId]
-    }
+  function selectElement(elementId: string | string[], multi = false) {
+    elementStore.selectElement(elementId, multi)
   }
 
-  function deselectElement(elementId: string) {
-    const index = selectedElementIds.value.indexOf(elementId)
-    if (index >= 0) {
-      selectedElementIds.value.splice(index, 1)
-    }
+  function deselectElement(elementId: string | string[]) {
+    elementStore.deselectElement(elementId)
   }
 
   function clearSelection() {
-    selectedElementIds.value = []
+    elementStore.clearSelection()
   }
 
   function updateCanvasConfig(config: Partial<typeof canvasConfig.value>) {
@@ -79,13 +63,13 @@ export const useCanvasStore = defineStore('canvas', () => {
 
   return {
     // 状态
-    elements,
-    selectedElementIds,
+    elements, // 计算属性：从 elementStore 获取
+    selectedElementIds, // 计算属性：从 elementStore 获取
     canvasConfig,
     // 计算属性
-    selectedElements,
-    hasSelection,
-    // 方法
+    selectedElements, // 计算属性：从 elementStore 获取
+    hasSelection, // 计算属性：从 elementStore 获取
+    // 方法（代理到 elementStore，保持向后兼容）
     addElement,
     removeElement,
     updateElement,

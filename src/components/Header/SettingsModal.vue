@@ -1,5 +1,11 @@
 <template>
-  <n-modal :show="show" @update:show="(val) => emit('update:show', val)" preset="dialog" title="设置" style="width: 600px">
+  <n-modal
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    preset="dialog"
+    title="设置"
+    style="width: 600px"
+  >
     <n-form :model="settings" label-placement="left" label-width="120px">
       <n-form-item label="导出格式">
         <n-radio-group v-model:value="settings.exportFormat">
@@ -33,7 +39,17 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { NModal, NForm, NFormItem, NRadioGroup, NRadio, NInputNumber, NSwitch, NButton, NSpace } from 'naive-ui'
+import {
+  NModal,
+  NForm,
+  NFormItem,
+  NRadioGroup,
+  NRadio,
+  NInputNumber,
+  NSwitch,
+  NButton,
+  NSpace
+} from 'naive-ui'
 import { useUIStore } from '@/stores/uiStore'
 
 interface Props {
@@ -50,7 +66,7 @@ const settings = ref({ ...uiStore.settings })
 
 watch(
   () => props.show,
-  (newVal) => {
+  newVal => {
     if (newVal) {
       settings.value = { ...uiStore.settings }
     }

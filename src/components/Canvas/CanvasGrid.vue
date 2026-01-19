@@ -39,7 +39,7 @@ function drawGrid() {
 
   const canvas = gridCanvas.value
   const container = canvas.parentElement as HTMLElement
-  
+
   if (!container) return
 
   // 获取容器（canvas-wrapper）的尺寸
@@ -134,7 +134,7 @@ function drawGrid() {
     // 跳过主网格线
     const isMajor = Math.abs(xCanvas % majorGridSize) < 0.01
     if (isMajor) continue
-    
+
     const x = xCanvas * zoom + canvasLeft
     if (x >= 0 && x <= width) {
       ctx.beginPath()
@@ -149,7 +149,7 @@ function drawGrid() {
     // 跳过主网格线
     const isMajor = Math.abs(yCanvas % majorGridSize) < 0.01
     if (isMajor) continue
-    
+
     const y = yCanvas * zoom + canvasTop
     if (y >= 0 && y <= height) {
       ctx.beginPath()
@@ -204,11 +204,22 @@ onMounted(() => {
   }, 100)
 })
 
-watch([() => props.gridSize, () => props.zoom, () => props.offsetX, () => props.offsetY, () => props.canvasWidth, () => props.canvasHeight, isDark], () => {
-  nextTick(() => {
-    drawGrid()
-  })
-})
+watch(
+  [
+    () => props.gridSize,
+    () => props.zoom,
+    () => props.offsetX,
+    () => props.offsetY,
+    () => props.canvasWidth,
+    () => props.canvasHeight,
+    isDark
+  ],
+  () => {
+    nextTick(() => {
+      drawGrid()
+    })
+  }
+)
 
 onUnmounted(() => {
   if (resizeObserver) {

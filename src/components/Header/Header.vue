@@ -49,11 +49,6 @@ const isDark = computed(() => {
 function toggleTheme() {
   uiStore.toggleTheme()
 }
-
-// 阻止中键默认行为（打开新标签页）
-function handleContextMenu(e: MouseEvent) {
-  e.preventDefault()
-}
 </script>
 
 <style lang="scss" scoped>
@@ -66,7 +61,7 @@ function handleContextMenu(e: MouseEvent) {
   display: flex;
   align-items: center;
   background: var(--n-color);
-  
+
   // 白天主题添加阴影
   &:not(.dark-theme) {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

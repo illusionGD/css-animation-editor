@@ -1,27 +1,34 @@
 <template>
   <n-config-provider :theme="uiStore.theme">
-    <n-layout class="app-layout">
-      <Header />
-      <ResizableLayout>
-        <template #left>
-          <LeftSidebar />
-        </template>
-        <template #main>
-          <Canvas />
-        </template>
-        <template #right>
-          <PropertyPanel />
-        </template>
-        <template #bottom>
-          <Timeline />
-        </template>
-      </ResizableLayout>
-    </n-layout>
+    <n-message-provider>
+      <n-dialog-provider>
+        <div :data-theme="isDark ? 'dark' : 'light'" :class="{ 'dark-theme': isDark }">
+          <n-layout class="app-layout">
+            <Header />
+            <ResizableLayout>
+              <template #left>
+                <LeftSidebar />
+              </template>
+              <template #main>
+                <Canvas />
+              </template>
+              <template #right>
+                <PropertyPanel />
+              </template>
+              <template #bottom>
+                <Timeline />
+              </template>
+            </ResizableLayout>
+          </n-layout>
+        </div>
+      </n-dialog-provider>
+    </n-message-provider>
   </n-config-provider>
 </template>
 
 <script setup lang="ts">
-import { NConfigProvider, NLayout } from 'naive-ui'
+import { computed } from 'vue'
+import { NConfigProvider, NLayout, NMessageProvider, NDialogProvider } from 'naive-ui'
 import { useUIStore } from '@/stores/uiStore'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 import Header from '@/components/Header/Header.vue'
@@ -32,6 +39,7 @@ import PropertyPanel from '@/components/PropertyPanel/PropertyPanel.vue'
 import Timeline from '@/components/Timeline/Timeline.vue'
 
 const uiStore = useUIStore()
+const isDark = computed(() => uiStore.theme !== null)
 useKeyboardShortcuts()
 </script>
 
@@ -43,5 +51,4 @@ useKeyboardShortcuts()
   flex-direction: column;
   overflow: hidden;
 }
-
 </style>

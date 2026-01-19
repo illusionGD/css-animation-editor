@@ -21,7 +21,7 @@ import PresetPanel from './PresetPanel.vue'
 const uiStore = useUIStore()
 const activeTab = computed({
   get: () => uiStore.leftSidebarTab,
-  set: (val) => uiStore.setLeftSidebarTab(val)
+  set: val => uiStore.setLeftSidebarTab(val)
 })
 </script>
 

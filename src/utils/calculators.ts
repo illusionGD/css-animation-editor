@@ -13,6 +13,50 @@ export function distance(x1: number, y1: number, x2: number, y2: number): number
 }
 
 /**
+ * 根据关键帧计算当前时间点的属性值
+ * @param keyframes 关键帧数组（已按时间排序）
+ * @param currentTime 当前时间（0-1 相对时间）
+ * @returns 插值后的值
+ */
+export function interpolateKeyframes(
+  keyframes: Array<{ time: number; value: number | string }>,
+  currentTime: number
+): number | string | undefined {
+  if (keyframes.length === 0) return undefined
+
+  // 如果当前时间小于第一个关键帧，返回第一个关键帧的值
+  if (currentTime <= keyframes[0].time) {
+    return keyframes[0].value
+  }
+
+  // 如果当前时间大于最后一个关键帧，返回最后一个关键帧的值
+  if (currentTime >= keyframes[keyframes.length - 1].time) {
+    return keyframes[keyframes.length - 1].value
+  }
+
+  // 找到当前时间所在的两个关键帧之间
+  for (let i = 0; i < keyframes.length - 1; i++) {
+    const kf1 = keyframes[i]
+    const kf2 = keyframes[i + 1]
+
+    if (currentTime >= kf1.time && currentTime <= kf2.time) {
+      // 计算插值比例
+      const t = (currentTime - kf1.time) / (kf2.time - kf1.time)
+
+      // 如果两个值都是数字，进行线性插值
+      if (typeof kf1.value === 'number' && typeof kf2.value === 'number') {
+        return lerp(kf1.value, kf2.value, t)
+      }
+
+      // 如果值类型不同或不是数字，返回前一个关键帧的值
+      return kf1.value
+    }
+  }
+
+  return undefined
+}
+
+/**
  * 限制值在范围内
  */
 export function clamp(value: number, min: number, max: number): number {

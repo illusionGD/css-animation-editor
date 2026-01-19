@@ -15,17 +15,17 @@ export const usePresetStore = defineStore('preset', () => {
 
     // 按分类过滤
     if (selectedCategory.value) {
-      result = result.filter((p) => p.category === selectedCategory.value)
+      result = result.filter(p => p.category === selectedCategory.value)
     }
 
     // 按搜索关键词过滤
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
       result = result.filter(
-        (p) =>
+        p =>
           p.name.toLowerCase().includes(query) ||
           p.description?.toLowerCase().includes(query) ||
-          p.tags?.some((tag) => tag.toLowerCase().includes(query))
+          p.tags?.some(tag => tag.toLowerCase().includes(query))
       )
     }
 
@@ -70,7 +70,7 @@ export const usePresetStore = defineStore('preset', () => {
 
   function updateCategories() {
     const cats = new Set<string>()
-    presets.value.forEach((p) => {
+    presets.value.forEach(p => {
       if (p.category) {
         cats.add(p.category)
       }

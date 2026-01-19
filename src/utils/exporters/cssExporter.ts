@@ -5,11 +5,11 @@ export function exportCSS(elements: CanvasElement[]): string {
 
   elements.forEach((element, index) => {
     const animationName = `animation-${element.id || index}`
-    
+
     // 生成 @keyframes
     css += `@keyframes ${animationName} {\n`
     if (element.animation?.keyframes) {
-      element.animation.keyframes.forEach((keyframe) => {
+      element.animation.keyframes.forEach(keyframe => {
         const percentage = Math.round(keyframe.time * 100)
         css += `  ${percentage}% {\n`
         css += `    transform: translate(${keyframe.value}px, 0);\n`

@@ -8,6 +8,8 @@
         class="keyframe"
         :style="{ left: `${keyframe.time * 100}%` }"
         @mousedown.stop="startDrag(index, $event)"
+        @dblclick.stop="handleKeyframeDoubleClick(index, $event)"
+        @contextmenu.stop="handleKeyframeContextMenu(index, $event)"
       >
         <div class="keyframe-handle"></div>
       </div>
@@ -23,45 +25,99 @@ interface Props {
   track: AnimationTrack
   currentTime: number
   duration: number
+  snapEnabled?: boolean
+  snapInterval?: number
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  snapEnabled: false,
+  snapInterval: 100
+})
 
 const emit = defineEmits<{
   'add-keyframe': [property: string, time: number, value: any]
   'remove-keyframe': [property: string, index: number]
+  'update-keyframe-time': [property: string, index: number, time: number]
+  'edit-keyframe-value': [property: string, index: number]
 }>()
 
 function handleClick(e: MouseEvent) {
+  // 如果点击的是关键帧，不添加新关键帧
+  if ((e.target as HTMLElement).closest('.keyframe')) {
+    return
+  }
+
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
-  const time = (x / rect.width) * props.duration
+  let time = (x / rect.width) * props.duration
+
+  // 如果启用吸附，对齐到网格
+  if (props.snapEnabled && props.snapInterval) {
+    time = Math.round(time / props.snapInterval) * props.snapInterval
+  }
+
   emit('add-keyframe', props.track.property, time, 0)
+}
+
+function handleKeyframeDoubleClick(index: number, e: MouseEvent) {
+  e.stopPropagation()
+  // 双击编辑关键帧值
+  emit('edit-keyframe-value', props.track.property, index)
+}
+
+function handleKeyframeContextMenu(index: number, e: MouseEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+  // 右键菜单删除关键帧（可以后续扩展为完整菜单）
+  emit('remove-keyframe', props.track.property, index)
 }
 
 let isDragging = false
 let dragIndex = -1
-let dragStart = 0
+let dragStartX = 0
+let dragStartTime = 0
 
 function startDrag(index: number, e: MouseEvent) {
+  e.stopPropagation()
   isDragging = true
   dragIndex = index
-  dragStart = e.clientX
+  dragStartX = e.clientX
+  dragStartTime = props.track.keyframes[index].time
 
   document.addEventListener('mousemove', handleDrag)
   document.addEventListener('mouseup', stopDrag)
+  e.preventDefault()
 }
 
 function handleDrag(e: MouseEvent) {
   if (!isDragging || dragIndex < 0) return
-  // TODO: 实现关键帧拖拽
+
+  const trackContent = (e.target as HTMLElement).closest('.track-content') as HTMLElement
+  if (!trackContent) return
+
+  const rect = trackContent.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  // 计算新的相对时间（0-1）
+  let newTime = Math.max(0, Math.min(1, x / rect.width))
+
+  // 如果启用吸附，对齐到网格
+  if (props.snapEnabled && props.snapInterval) {
+    const timeMs = newTime * props.duration
+    const snappedTimeMs = Math.round(timeMs / props.snapInterval) * props.snapInterval
+    newTime = Math.max(0, Math.min(1, snappedTimeMs / props.duration))
+  }
+
+  // 更新关键帧时间
+  emit('update-keyframe-time', props.track.property, dragIndex, newTime)
 }
 
 function stopDrag() {
-  isDragging = false
-  dragIndex = -1
-  document.removeEventListener('mousemove', handleDrag)
-  document.removeEventListener('mouseup', stopDrag)
+  if (isDragging) {
+    isDragging = false
+    dragIndex = -1
+    document.removeEventListener('mousemove', handleDrag)
+    document.removeEventListener('mouseup', stopDrag)
+  }
 }
 
 onUnmounted(() => {
@@ -103,11 +159,11 @@ onUnmounted(() => {
 }
 
 .keyframe-handle {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   background: #18a058;
   border: 2px solid #fff;
-  border-radius: 50%;
+  transform: rotate(45deg);
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
 }
 </style>

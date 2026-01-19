@@ -14,12 +14,7 @@
       size="small"
       @update:value="handleColorUpdate"
     />
-    <n-input
-      v-else
-      v-model:value="stringValue"
-      size="small"
-      @update:value="handleStringUpdate"
-    />
+    <n-input v-else v-model:value="stringValue" size="small" @update:value="handleStringUpdate" />
   </div>
 </template>
 
@@ -39,7 +34,16 @@ const emit = defineEmits<{
 }>()
 
 const isNumber = computed(() => {
-  const numberProps = ['width', 'height', 'translateX', 'translateY', 'scaleX', 'scaleY', 'rotate', 'opacity']
+  const numberProps = [
+    'width',
+    'height',
+    'translateX',
+    'translateY',
+    'scaleX',
+    'scaleY',
+    'rotate',
+    'opacity'
+  ]
   return numberProps.includes(props.property)
 })
 
@@ -48,13 +52,15 @@ const isColor = computed(() => {
   return colorProps.includes(props.property)
 })
 
-const numberValue = ref(typeof props.value === 'number' ? props.value : parseFloat(String(props.value)) || 0)
+const numberValue = ref(
+  typeof props.value === 'number' ? props.value : parseFloat(String(props.value)) || 0
+)
 const stringValue = ref(String(props.value || ''))
 const colorValue = ref(String(props.value || '#000000'))
 
 watch(
   () => props.value,
-  (newVal) => {
+  newVal => {
     if (isNumber.value) {
       numberValue.value = typeof newVal === 'number' ? newVal : parseFloat(String(newVal)) || 0
     } else if (isColor.value) {

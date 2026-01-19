@@ -1,0 +1,179 @@
+@use './variables' as *;
+
+// 滚动条样式 mixin
+@mixin custom-scrollbar($width: var(--scrollbar-width), $thin: false) {
+  // Webkit 浏览器（Chrome, Safari, Edge）
+  &::-webkit-scrollbar {
+    @if sass($thin) {
+      width: var(--scrollbar-width-thin);
+      height: var(--scrollbar-width-thin);
+    } @else {
+      width: $width;
+      height: $width;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: var(--scrollbar-radius);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: var(--scrollbar-radius);
+    transition: background var(--transition-base) var(--transition-ease);
+
+    &:hover {
+      background: var(--scrollbar-thumb-hover);
+    }
+  }
+
+  // Firefox
+  @if sass($thin) {
+    scrollbar-width: thin;
+  } @else {
+    scrollbar-width: auto;
+  }
+
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+// 文本省略 mixin
+@mixin text-ellipsis($lines: 1) {
+  @if $lines ==1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// Flex 布局 mixin
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// 绝对居中
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// 固定宽高比
+@mixin aspect-ratio($width: 16, $height: 9) {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    display: block;
+    padding-top: percentage($height / $width);
+  }
+
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// 响应式断点
+$breakpoint-xs: 480px;
+$breakpoint-sm: 768px;
+$breakpoint-md: 1024px;
+$breakpoint-lg: 1280px;
+$breakpoint-xl: 1920px;
+
+@mixin respond-to($breakpoint) {
+  @if $breakpoint ==xs {
+    @media (max-width: $breakpoint-xs) {
+      @content;
+    }
+  } @else if $breakpoint ==sm {
+    @media (max-width: $breakpoint-sm) {
+      @content;
+    }
+  } @else if $breakpoint ==md {
+    @media (max-width: $breakpoint-md) {
+      @content;
+    }
+  } @else if $breakpoint ==lg {
+    @media (max-width: $breakpoint-lg) {
+      @content;
+    }
+  } @else if $breakpoint ==xl {
+    @media (max-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+}
+
+// 主题切换 mixin（已废弃，直接使用 CSS 变量即可）
+// 保留用于向后兼容，但建议直接使用 CSS 变量
+@mixin theme-variant($property, $light-value, $dark-value) {
+  #{$property}: $light-value;
+
+  .dark-theme &,
+  [data-theme='dark'] & {
+    #{$property}: $dark-value;
+  }
+}
+
+// 过渡动画 mixin
+@mixin transition($properties...) {
+  $transition-list: ();
+
+  @each $property in $properties {
+    $transition-list: append(
+      $transition-list,
+      $property var(--transition-base) var(--transition-ease),
+      comma
+    );
+  }
+
+  transition: $transition-list;
+}
+
+// 阴影 mixin
+@mixin shadow($level: md) {
+  @if $level ==sm {
+    box-shadow: var(--shadow-sm);
+  } @else if $level ==md {
+    box-shadow: var(--shadow-md);
+  } @else if $level ==lg {
+    box-shadow: var(--shadow-lg);
+  } @else if $level ==xl {
+    box-shadow: var(--shadow-xl);
+  }
+}

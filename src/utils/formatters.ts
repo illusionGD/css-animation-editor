@@ -61,7 +61,11 @@ function applyRounding(value: number, decimals: number, mode: RoundingMode): num
  * @param mode 舍入方式，默认为 'round'
  * @returns 格式化后的字符串
  */
-export function formatDecimal(value: number, decimals: number = 2, mode: RoundingMode = 'round'): string {
+export function formatDecimal(
+  value: number,
+  decimals: number = 2,
+  mode: RoundingMode = 'round'
+): string {
   const rounded = applyRounding(value, decimals, mode)
   return rounded.toFixed(decimals)
 }
@@ -73,7 +77,11 @@ export function formatDecimal(value: number, decimals: number = 2, mode: Roundin
  * @param mode 舍入方式，默认为 'round'
  * @returns 格式化后的字符串（移除末尾零）
  */
-export function formatDecimalTrim(value: number, decimals: number = 2, mode: RoundingMode = 'round'): string {
+export function formatDecimalTrim(
+  value: number,
+  decimals: number = 2,
+  mode: RoundingMode = 'round'
+): string {
   const rounded = applyRounding(value, decimals, mode)
   return parseFloat(rounded.toFixed(decimals)).toString()
 }

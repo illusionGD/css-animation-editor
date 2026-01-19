@@ -1,5 +1,5 @@
 <template>
-  <div class="canvas-container" ref="containerRef">
+  <div ref="containerRef" class="canvas-container">
     <div class="canvas-ruler-wrapper">
       <CanvasRuler
         v-if="canvasConfig.showRuler"
@@ -17,11 +17,7 @@
         :offset-x="canvasConfig.offsetX"
         :offset-y="canvasConfig.offsetY"
       />
-      <div
-        class="canvas-wrapper"
-        @wheel="handleWheel"
-        @contextmenu.prevent
-      >
+      <div class="canvas-wrapper" @wheel="handleWheel" @contextmenu.prevent>
         <CanvasGrid
           v-if="canvasConfig.showGrid"
           :grid-size="canvasConfig.gridSize"
@@ -44,13 +40,15 @@
             :key="element.id"
             :element="element"
             :selected="isSelected(element.id)"
+            :canvas-zoom="canvasConfig.zoom"
+            :canvas-offset-x="canvasConfig.offsetX"
+            :canvas-offset-y="canvasConfig.offsetY"
+            :canvas-width="canvasConfig.width"
+            :canvas-height="canvasConfig.height"
             @select="handleElementSelect"
             @update="handleElementUpdate"
           />
-          <SelectionBox
-            v-if="selectionBox"
-            :box="selectionBox"
-          />
+          <SelectionBox v-if="selectionBox" :box="selectionBox" />
         </div>
       </div>
     </div>
@@ -61,6 +59,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useCanvasStore } from '@/stores/canvasStore'
 import { useUIStore } from '@/stores/uiStore'
+import { useAnimationStore } from '@/stores/animationStore'
 import { clamp } from '@/utils/calculators'
 import CanvasRuler from './CanvasRuler.vue'
 import CanvasGrid from './CanvasGrid.vue'
@@ -70,6 +69,7 @@ import type { CanvasElement as CanvasElementType } from '@/types'
 
 const canvasStore = useCanvasStore()
 const uiStore = useUIStore()
+const animationStore = useAnimationStore()
 
 const containerRef = ref<HTMLElement>()
 const selectionBox = ref<{ x: number; y: number; width: number; height: number } | null>(null)
@@ -194,6 +194,10 @@ function handleSelectionEnd(e: MouseEvent) {
 
 function handleElementSelect(elementId: string, multi: boolean) {
   canvasStore.selectElement(elementId, multi)
+  // 同步设置动画 store 的选中元素
+  if (!multi) {
+    animationStore.setSelectedElement(elementId)
+  }
 }
 
 function handleElementUpdate(elementId: string, updates: Partial<CanvasElementType>) {
@@ -286,7 +290,7 @@ function handleCanvasPanUp(_e: MouseEvent) {
   display: flex;
   height: 20px;
   margin-left: 20px; // 为垂直标尺留出空间
-  
+
   .ruler-corner {
     width: 20px;
     height: 20px;

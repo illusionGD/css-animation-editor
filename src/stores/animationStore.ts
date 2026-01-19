@@ -7,10 +7,18 @@ export const useAnimationStore = defineStore('animation', () => {
   const isPlaying = ref(false)
   const currentTime = ref(0)
   const duration = ref(3000) // 默认3秒
-  const tracks = ref<AnimationTrack[]>([])
+  // 按元素ID存储tracks: elementId -> tracks[]
+  const elementTracks = ref<Record<string, AnimationTrack[]>>({})
   const selectedElementId = ref<string | null>(null)
 
-  // 计算属性
+  // 计算属性：当前选中元素的tracks
+  const tracks = computed(() => {
+    if (!selectedElementId.value) {
+      return []
+    }
+    return elementTracks.value[selectedElementId.value] || []
+  })
+
   const currentProgress = computed(() => {
     return duration.value > 0 ? currentTime.value / duration.value : 0
   })
@@ -18,11 +26,30 @@ export const useAnimationStore = defineStore('animation', () => {
   // 方法
   function setDuration(newDuration: number) {
     duration.value = Math.max(100, newDuration)
+    // 更新所有tracks的duration
+    Object.values(elementTracks.value).forEach(tracks => {
+      tracks.forEach(track => {
+        track.duration = duration.value
+      })
+    })
+  }
+
+  function setSelectedElement(elementId: string | null) {
+    // 如果切换元素，初始化该元素的tracks（如果不存在）
+    if (elementId && !elementTracks.value[elementId]) {
+      elementTracks.value[elementId] = []
+    }
+    selectedElementId.value = elementId
   }
 
   function addTrack(property: string) {
-    if (!tracks.value.find((t) => t.property === property)) {
-      tracks.value.push({
+    if (!selectedElementId.value) return
+    const elementId = selectedElementId.value
+    if (!elementTracks.value[elementId]) {
+      elementTracks.value[elementId] = []
+    }
+    if (!elementTracks.value[elementId].find(t => t.property === property)) {
+      elementTracks.value[elementId].push({
         property,
         keyframes: [],
         duration: duration.value
@@ -31,14 +58,22 @@ export const useAnimationStore = defineStore('animation', () => {
   }
 
   function removeTrack(property: string) {
-    const index = tracks.value.findIndex((t) => t.property === property)
+    if (!selectedElementId.value) return
+    const elementId = selectedElementId.value
+    const tracks = elementTracks.value[elementId]
+    if (!tracks) return
+    const index = tracks.findIndex(t => t.property === property)
     if (index >= 0) {
-      tracks.value.splice(index, 1)
+      tracks.splice(index, 1)
     }
   }
 
   function addKeyframe(property: string, keyframe: Keyframe) {
-    const track = tracks.value.find((t) => t.property === property)
+    if (!selectedElementId.value) return
+    const elementId = selectedElementId.value
+    const tracks = elementTracks.value[elementId]
+    if (!tracks) return
+    const track = tracks.find(t => t.property === property)
     if (track) {
       track.keyframes.push(keyframe)
       track.keyframes.sort((a, b) => a.time - b.time)
@@ -46,14 +81,22 @@ export const useAnimationStore = defineStore('animation', () => {
   }
 
   function removeKeyframe(property: string, keyframeIndex: number) {
-    const track = tracks.value.find((t) => t.property === property)
+    if (!selectedElementId.value) return
+    const elementId = selectedElementId.value
+    const tracks = elementTracks.value[elementId]
+    if (!tracks) return
+    const track = tracks.find(t => t.property === property)
     if (track && keyframeIndex >= 0 && keyframeIndex < track.keyframes.length) {
       track.keyframes.splice(keyframeIndex, 1)
     }
   }
 
   function updateKeyframe(property: string, keyframeIndex: number, updates: Partial<Keyframe>) {
-    const track = tracks.value.find((t) => t.property === property)
+    if (!selectedElementId.value) return
+    const elementId = selectedElementId.value
+    const tracks = elementTracks.value[elementId]
+    if (!tracks) return
+    const track = tracks.find(t => t.property === property)
     if (track && keyframeIndex >= 0 && keyframeIndex < track.keyframes.length) {
       Object.assign(track.keyframes[keyframeIndex], updates)
       track.keyframes.sort((a, b) => a.time - b.time)
@@ -77,8 +120,9 @@ export const useAnimationStore = defineStore('animation', () => {
     currentTime.value = Math.max(0, Math.min(time, duration.value))
   }
 
-  function setSelectedElement(elementId: string | null) {
-    selectedElementId.value = elementId
+  // 获取指定元素的tracks（用于动画预览）
+  function getElementTracks(elementId: string): AnimationTrack[] {
+    return elementTracks.value[elementId] || []
   }
 
   return {
@@ -88,10 +132,12 @@ export const useAnimationStore = defineStore('animation', () => {
     duration,
     tracks,
     selectedElementId,
+    elementTracks,
     // 计算属性
     currentProgress,
     // 方法
     setDuration,
+    setSelectedElement,
     addTrack,
     removeTrack,
     addKeyframe,
@@ -101,6 +147,6 @@ export const useAnimationStore = defineStore('animation', () => {
     pause,
     stop,
     seek,
-    setSelectedElement
+    getElementTracks
   }
 })

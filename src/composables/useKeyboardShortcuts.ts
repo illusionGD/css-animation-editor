@@ -74,14 +74,14 @@ export function useKeyboardShortcuts() {
     {
       key: 'Delete',
       handler: () => {
-        canvasStore.selectedElementIds.forEach((id) => {
+        canvasStore.selectedElementIds.forEach(id => {
           canvasStore.removeElement(id)
         })
       }
     },
     {
       key: ' ',
-      handler: (e) => {
+      handler: e => {
         e.preventDefault()
         if (animationStore.isPlaying) {
           animationStore.pause()

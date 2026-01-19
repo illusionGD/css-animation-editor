@@ -1,9 +1,5 @@
 <template>
-  <div
-    v-if="props.type === 'horizontal'"
-    class="ruler-horizontal"
-    :style="horizontalStyle"
-  >
+  <div v-if="props.type === 'horizontal'" class="ruler-horizontal" :style="horizontalStyle">
     <div
       v-for="tick in horizontalTicks"
       class="ruler-tick"
@@ -14,11 +10,7 @@
       <span class="ruler-label">{{ tick.label }}</span>
     </div>
   </div>
-  <div
-    v-else
-    class="ruler-vertical"
-    :style="verticalStyle"
-  >
+  <div v-else class="ruler-vertical" :style="verticalStyle">
     <div
       v-for="tick in verticalTicks"
       :key="`v-${tick.value}`"
@@ -67,7 +59,10 @@ const majorTickInterval = computed(() => {
   const screenInterval = baseMajorTickInterval * props.zoom
   if (screenInterval < minScreenInterval * 2) {
     // 如果主刻度屏幕间隔太小，增大主刻度间隔
-    return Math.ceil((minScreenInterval * 2) / props.zoom / baseMajorTickInterval) * baseMajorTickInterval
+    return (
+      Math.ceil((minScreenInterval * 2) / props.zoom / baseMajorTickInterval) *
+      baseMajorTickInterval
+    )
   }
   return baseMajorTickInterval
 })
@@ -101,7 +96,7 @@ const horizontalTicks = computed(() => {
   const zoom = props.zoom
   const interval = tickInterval.value
   const majorInterval = majorTickInterval.value
-  
+
   // 计算可见区域的起始和结束位置（画布坐标）
   // 水平标尺在 .canvas-ruler-wrapper 中，该容器有 margin-left: 20px
   // 标尺本身是 position: relative，所以刻度位置是相对于标尺容器的
@@ -111,16 +106,16 @@ const horizontalTicks = computed(() => {
   // 所以标尺容器的可见区域：从 0 到 viewportWidth（相对于标尺容器）
   const startX = (0 - props.offsetX) / zoom - 100
   const endX = (viewportWidth - props.offsetX) / zoom + 100
-  
+
   // 生成刻度
   for (let i = Math.floor(startX / interval) * interval; i <= endX; i += interval) {
     const isMajor = Math.abs(i % majorInterval) < 0.1
-    
+
     // 如果缩放太小，只显示主刻度
     if (!showMinorTicks.value && !isMajor) {
       continue
     }
-    
+
     // 计算刻度在标尺中的位置
     // 水平标尺在 .canvas-ruler-wrapper 中，该容器有 margin-left: 20px
     // 标尺本身是 position: relative，所以刻度位置是相对于标尺容器的
@@ -131,7 +126,7 @@ const horizontalTicks = computed(() => {
     // 所以标尺刻度的位置计算应该与网格线一致，都是相对于各自容器的
     // 画布的(0,0)对应容器中的(offsetX, offsetY)位置
     const position = i * zoom + props.offsetX
-    
+
     // 只显示可见区域的刻度（相对于标尺容器）
     if (position >= -100 && position <= viewportWidth + 100) {
       ticks.push({
@@ -142,7 +137,7 @@ const horizontalTicks = computed(() => {
       })
     }
   }
-  
+
   return ticks
 })
 
@@ -153,26 +148,26 @@ const verticalTicks = computed(() => {
   const interval = tickInterval.value
   const majorInterval = majorTickInterval.value
   const rulerSize = 20 // 标尺宽度
-  
+
   // 计算可见区域的起始和结束位置（画布坐标）
   // 标尺从rulerSize位置开始（为水平标尺留出空间）
   const rulerStartY = rulerSize
   const startY = (rulerStartY - props.offsetY) / zoom - 100
   const endY = (rulerStartY - props.offsetY + viewportHeight) / zoom + 100
-  
+
   // 生成刻度
   for (let i = Math.floor(startY / interval) * interval; i <= endY; i += interval) {
     const isMajor = Math.abs(i % majorInterval) < 0.1
-    
+
     // 如果缩放太小，只显示主刻度
     if (!showMinorTicks.value && !isMajor) {
       continue
     }
-    
+
     // 计算刻度在标尺中的位置：画布坐标 * zoom + offsetY
     // 画布的(0,0)对应标尺的(rulerSize, rulerSize)位置
     const position = i * zoom + props.offsetY
-    
+
     // 只显示可见区域的刻度
     if (position >= rulerStartY - 100 && position <= rulerStartY + viewportHeight + 100) {
       ticks.push({
@@ -183,19 +178,19 @@ const verticalTicks = computed(() => {
       })
     }
   }
-  
+
   return ticks
 })
 
 // 格式化标签，当数值很大时使用科学计数法或简化显示
 function formatLabel(value: number): string {
   const absValue = Math.abs(value)
-  
+
   // 如果数值很大，使用简化显示
   if (absValue >= 10000) {
     return `${(value / 1000).toFixed(1)}k`
   }
-  
+
   return Math.round(value).toString()
 }
 </script>
@@ -231,7 +226,7 @@ function formatLabel(value: number): string {
   border-left: 1px solid v-bind('isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)"');
   height: 6px;
   top: 14px;
-  
+
   &.ruler-tick-major {
     height: 10px;
     top: 10px;
@@ -239,12 +234,11 @@ function formatLabel(value: number): string {
     border-left-color: v-bind('isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)"');
 
     .ruler-label {
-        top: 10px;
-        font-weight: bold;
+      top: 10px;
+      font-weight: bold;
     }
   }
 }
-
 
 .ruler-vertical .ruler-tick {
   border-left: none;
@@ -252,16 +246,16 @@ function formatLabel(value: number): string {
   width: 6px;
   left: 14px;
   height: 0;
-  
+
   &.ruler-tick-major {
     width: 10px;
     left: 10px;
     border-top-width: 1.5px;
     border-top-color: v-bind('isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)"');
     .ruler-label {
-        top: 50%;
-        left: 10px;
-        font-weight: bold;
+      top: 50%;
+      left: 10px;
+      font-weight: bold;
     }
   }
 }

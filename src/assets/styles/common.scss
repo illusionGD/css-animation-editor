@@ -1,0 +1,66 @@
+@use './variables' as *;
+@use './mixins' as *;
+
+// 全局重置样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  // 确保主题变量可以继承
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+// 公共滚动条 class
+.custom-scrollbar {
+  @include custom-scrollbar;
+}
+
+.custom-scrollbar-thin {
+  @include custom-scrollbar($thin: true);
+}
+
+// 公共工具类
+.text-ellipsis {
+  @include text-ellipsis;
+}
+
+.text-ellipsis-2 {
+  @include text-ellipsis(2);
+}
+
+.text-ellipsis-3 {
+  @include text-ellipsis(3);
+}
+
+.flex-center {
+  @include flex-center;
+}
+
+.flex-between {
+  @include flex-between;
+}
+
+.flex-column {
+  @include flex-column;
+}
+
+.clearfix {
+  @include clearfix;
+}

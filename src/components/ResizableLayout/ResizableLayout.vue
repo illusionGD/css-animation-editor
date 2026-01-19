@@ -9,10 +9,7 @@
         :style="{ width: `${leftWidth}px` }"
       >
         <slot name="left"></slot>
-        <div
-          class="resize-handle left-handle"
-          @mousedown="startResize('left', $event)"
-        ></div>
+        <div class="resize-handle left-handle" @mousedown="startResize('left', $event)"></div>
       </div>
 
       <!-- 中间内容区 -->
@@ -27,10 +24,7 @@
         :class="{ 'dark-theme': isDark }"
         :style="{ width: `${rightWidth}px` }"
       >
-        <div
-          class="resize-handle right-handle"
-          @mousedown="startResize('right', $event)"
-        ></div>
+        <div class="resize-handle right-handle" @mousedown="startResize('right', $event)"></div>
         <slot name="right"></slot>
       </div>
     </div>
@@ -42,10 +36,7 @@
       :class="{ 'dark-theme': isDark }"
       :style="{ height: `${bottomHeight}px` }"
     >
-      <div
-        class="resize-handle top-handle"
-        @mousedown="startResize('bottom', $event)"
-      ></div>
+      <div class="resize-handle top-handle" @mousedown="startResize('bottom', $event)"></div>
       <slot name="bottom"></slot>
     </div>
   </div>
@@ -72,17 +63,17 @@ const props = withDefaults(defineProps<Props>(), {
 
 const leftWidth = computed({
   get: () => uiStore.leftSidebarWidth,
-  set: (val) => uiStore.setLeftSidebarWidth(val)
+  set: val => uiStore.setLeftSidebarWidth(val)
 })
 
 const rightWidth = computed({
   get: () => uiStore.rightSidebarWidth,
-  set: (val) => uiStore.setRightSidebarWidth(val)
+  set: val => uiStore.setRightSidebarWidth(val)
 })
 
 const bottomHeight = computed({
   get: () => uiStore.timelineHeight,
-  set: (val) => uiStore.setTimelineHeight(val)
+  set: val => uiStore.setTimelineHeight(val)
 })
 
 const containerStyle = computed(() => ({
@@ -90,13 +81,14 @@ const containerStyle = computed(() => ({
 }))
 
 const mainContentStyle = computed(() => ({
-  width: props.showLeft && props.showRight
-    ? `calc(100% - ${leftWidth.value + rightWidth.value}px)`
-    : props.showLeft
-    ? `calc(100% - ${leftWidth.value}px)`
-    : props.showRight
-    ? `calc(100% - ${rightWidth.value}px)`
-    : '100%'
+  width:
+    props.showLeft && props.showRight
+      ? `calc(100% - ${leftWidth.value + rightWidth.value}px)`
+      : props.showLeft
+        ? `calc(100% - ${leftWidth.value}px)`
+        : props.showRight
+          ? `calc(100% - ${rightWidth.value}px)`
+          : '100%'
 }))
 
 let resizing = false
@@ -160,7 +152,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .resizable-layout {
   width: 100%;
-  height: 100%;
+  height: calc(100vh - var(--header-height));
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -179,12 +171,12 @@ onUnmounted(() => {
   background: var(--n-color);
   border-right: 1px solid var(--n-borderColor);
   overflow: hidden;
-  
+
   // 白天主题添加阴影
   &:not(.dark-theme) {
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   }
-  
+
   &.dark-theme {
     box-shadow: none;
   }
@@ -193,12 +185,12 @@ onUnmounted(() => {
 .right-sidebar {
   border-right: none;
   border-left: 1px solid var(--n-borderColor);
-  
+
   // 白天主题添加阴影
   &:not(.dark-theme) {
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
   }
-  
+
   &.dark-theme {
     box-shadow: none;
   }
@@ -207,13 +199,13 @@ onUnmounted(() => {
 .main-content {
   flex: 1;
   overflow: hidden;
-  
+
   // 白天主题添加边框
   &:not(.dark-theme) {
     border-left: 1px solid rgba(0, 0, 0, 0.08);
     border-right: 1px solid rgba(0, 0, 0, 0.08);
   }
-  
+
   &.dark-theme {
     border-left: none;
     border-right: none;
@@ -225,12 +217,12 @@ onUnmounted(() => {
   background: var(--n-color);
   border-top: 1px solid var(--n-borderColor);
   overflow: hidden;
-  
+
   // 白天主题添加阴影
   &:not(.dark-theme) {
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
   }
-  
+
   &.dark-theme {
     box-shadow: none;
   }

@@ -12,7 +12,7 @@ export class LocalStorageAdapter implements StorageAdapter {
   // 项目相关
   async saveProject(project: Project): Promise<void> {
     const projects = this.getProjects()
-    const index = projects.findIndex((p) => p.id === project.id)
+    const index = projects.findIndex(p => p.id === project.id)
     if (index >= 0) {
       projects[index] = { ...project, updatedAt: Date.now() }
     } else {
@@ -23,7 +23,7 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async loadProject(projectId: string): Promise<Project | null> {
     const projects = this.getProjects()
-    return projects.find((p) => p.id === projectId) || null
+    return projects.find(p => p.id === projectId) || null
   }
 
   async listProjects(): Promise<Project[]> {
@@ -32,14 +32,14 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async deleteProject(projectId: string): Promise<void> {
     const projects = this.getProjects()
-    const filtered = projects.filter((p) => p.id !== projectId)
+    const filtered = projects.filter(p => p.id !== projectId)
     localStorage.setItem(PROJECTS_KEY, JSON.stringify(filtered))
   }
 
   // 预设相关
   async savePreset(preset: PresetSchema): Promise<void> {
     const presets = this.getPresets()
-    const index = presets.findIndex((p) => p.id === preset.id)
+    const index = presets.findIndex(p => p.id === preset.id)
     if (index >= 0) {
       presets[index] = preset
     } else {
@@ -50,7 +50,7 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async loadPreset(presetId: string): Promise<PresetSchema | null> {
     const presets = this.getPresets()
-    return presets.find((p) => p.id === presetId) || null
+    return presets.find(p => p.id === presetId) || null
   }
 
   async listPresets(): Promise<PresetSchema[]> {
@@ -59,7 +59,7 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async deletePreset(presetId: string): Promise<void> {
     const presets = this.getPresets()
-    const filtered = presets.filter((p) => p.id !== presetId)
+    const filtered = presets.filter(p => p.id !== presetId)
     localStorage.setItem(PRESETS_KEY, JSON.stringify(filtered))
   }
 
