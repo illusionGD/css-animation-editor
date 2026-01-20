@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CanvasElement, AnimationConfig } from '@/types'
+import { ANIMATABLE_PROPERTIES } from '@/components/PropertyPanel/animatableProperties'
 
 // 默认动画配置
 const defaultAnimation: AnimationConfig = {
@@ -11,6 +12,17 @@ const defaultAnimation: AnimationConfig = {
   fillMode: 'forwards',
   easing: 'ease-in-out',
   keyframes: []
+}
+
+// 获取默认样式（根据可动画属性的默认值）
+function getDefaultStyle(): Record<string, string | number> {
+  const style: Record<string, string | number> = {}
+  ANIMATABLE_PROPERTIES.forEach(prop => {
+    if (prop.defaultValue !== undefined) {
+      style[prop.name] = prop.defaultValue
+    }
+  })
+  return style
 }
 
 export const useElementStore = defineStore('element', () => {
@@ -68,10 +80,14 @@ export const useElementStore = defineStore('element', () => {
       order = siblings.length
     }
 
+    // 合并默认样式和传入的样式
+    const defaultStyle = getDefaultStyle()
+    const mergedStyle = { ...defaultStyle, ...(data.style || {}) }
+
     const element: CanvasElement = {
       id,
       type: data.type || 'div',
-      style: data.style || {},
+      style: mergedStyle,
       animation: data.animation || defaultAnimation,
       position: data.position || { x: 0, y: 0 },
       size: data.size || { width: 100, height: 100 },
@@ -79,7 +95,8 @@ export const useElementStore = defineStore('element', () => {
       visible: data.visible !== false,
       locked: data.locked || false,
       parentId: data.parentId,
-      order
+      order,
+      tracks: data.tracks || [] // 初始化动画轨道
     }
     elements.value.set(id, element)
     return id
@@ -317,6 +334,12 @@ export const useElementStore = defineStore('element', () => {
     return getChildren(undefined)
   }
 
+  // 获取元素的动画轨道（只读方法，供其他store使用）
+  function getElementTracks(elementId: string): import('@/types').AnimationTrack[] {
+    const element = elements.value.get(elementId)
+    return element?.tracks || []
+  }
+
   // ========== 导出 ==========
   return {
     // 状态
@@ -465,6 +488,13 @@ export const useElementStore = defineStore('element', () => {
      * 获取根元素（没有父元素的元素）
      * @returns 根元素数组（按order排序）
      */
-    getRootElements
+    getRootElements,
+
+    /**
+     * 获取元素的动画轨道（只读方法）
+     * @param elementId 元素ID
+     * @returns 动画轨道数组
+     */
+    getElementTracks
   }
 })

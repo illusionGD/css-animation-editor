@@ -143,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, onMounted } from 'vue'
+import { computed, onUnmounted, ref, onMounted, watch } from 'vue'
 import { NButton, NInputNumber, NEmpty, NIcon, NModal, NSelect, NInput, NSwitch } from 'naive-ui'
 import { Add } from '@vicons/ionicons5'
 import { useAnimationStore } from '@/stores/animationStore'
@@ -355,6 +355,14 @@ function handleAddKeyframe(property: string, time: number, value: number | strin
 
 function handleRemoveKeyframe(property: string, index: number) {
   animationStore.removeKeyframe(property, index)
+  // 如果删除的是选中的关键帧，清除选中状态
+  if (
+    animationStore.selectedKeyframe &&
+    animationStore.selectedKeyframe.property === property &&
+    animationStore.selectedKeyframe.keyframeIndex === index
+  ) {
+    animationStore.clearSelectedKeyframe()
+  }
 }
 
 function handleUpdateKeyframeTime(property: string, index: number, time: number) {
@@ -364,6 +372,9 @@ function handleUpdateKeyframeTime(property: string, index: number, time: number)
 function handleEditKeyframeValue(property: string, index: number) {
   const track = animationStore.tracks.find(t => t.property === property)
   if (!track || index < 0 || index >= track.keyframes.length) return
+
+  // 设置选中的关键帧（用于属性面板显示）
+  animationStore.setSelectedKeyframe(property, index)
 
   const keyframe = track.keyframes[index]
   editingKeyframe.value = {
@@ -417,10 +428,20 @@ function handleSaveKeyframeValue() {
 
   const { property, index, value } = editingKeyframe.value
   animationStore.updateKeyframe(property, index, { value })
+  // 保持关键帧选中状态，以便在属性面板中继续编辑
+  animationStore.setSelectedKeyframe(property, index)
   editingKeyframe.value = null
   showKeyframeEditDialog.value = false
   return true
 }
+
+// 监听对话框关闭，清除选中状态（如果对话框被取消）
+watch(showKeyframeEditDialog, isOpen => {
+  if (!isOpen && editingKeyframe.value === null) {
+    // 对话框关闭且没有编辑中的关键帧，清除选中状态
+    animationStore.clearSelectedKeyframe()
+  }
+})
 
 function getPropertyLabel(property: string): string {
   const labels: Record<string, string> = {

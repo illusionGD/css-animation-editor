@@ -16,6 +16,7 @@ export interface CanvasElement {
   locked?: boolean
   parentId?: string // 父元素ID，用于构建树形结构
   order?: number // 同级元素的排序顺序
+  tracks?: AnimationTrack[] // 动画轨道数组，每个轨道对应一个CSS属性
 }
 
 export interface AnimationConfig {

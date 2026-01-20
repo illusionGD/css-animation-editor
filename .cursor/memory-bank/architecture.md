@@ -26,6 +26,23 @@ css-animation-editor/
 └── package.json
 ```
 
+## 当前开发状态（2024年更新）
+
+### 已完成模块
+- ✅ **Element Store**：核心数据源，完整实现
+- ✅ **Animation Store**：业务逻辑层，完整实现
+- ✅ **节点树系统**：基本完成（90%）
+- ✅ **属性面板**：基本完成（80%），数据联动待完善
+- ✅ **项目管理系统**：完整实现
+- ✅ **导出功能**：CSS、HTML、JSON 导出完整实现
+
+### 需要重构模块
+- ⚠️ **画布模块**：需要从 Canvas 迁移到 HTML 结构，更符合 CSS 动画效果
+
+### 未完成模块
+- ❌ **时间轴模块**：仅 UI 框架，核心功能未实现（K序列帧、缩放滚动、分通道、时间刻度等）
+- ❌ **预设库**：仅静态数据，导入/导出、预览等功能未完善
+
 ## 核心模块职责
 
 ### Element Store (`src/stores/elementStore.ts`) - **核心数据源**
@@ -93,31 +110,40 @@ css-animation-editor/
 ### Animation Store (`src/stores/animationStore.ts`)
 
 **职责**:
+- **管理动画业务逻辑**（播放控制、关键帧操作）
+- **不存储数据**，数据存储在 `elementStore` 中（tracks 存在元素的 `tracks` 字段）
 - 管理动画播放状态（isPlaying, currentTime）
 - 管理动画时长（duration）
-- 管理动画轨道（elementTracks）- 按元素ID存储：`Record<string, AnimationTrack[]>`
-- 管理关键帧（keyframes）
+- 管理选中关键帧状态（selectedKeyframe）
 
 **关键状态**:
-- `elementTracks: Record<string, AnimationTrack[]>` - 按元素ID存储动画轨道
 - `selectedElementId: string | null` - 当前编辑的元素ID
+- `selectedKeyframe: { property: string; keyframeIndex: number } | null` - 选中的关键帧
 - `isPlaying: boolean` - 是否正在播放
 - `currentTime: number` - 当前播放时间（毫秒）
 - `duration: number` - 动画时长（毫秒）
 
 **关键计算属性**:
-- `tracks: AnimationTrack[]` - 当前选中元素的 tracks
+- `tracks: AnimationTrack[]` - 当前选中元素的 tracks（从 elementStore 获取）
 - `currentProgress: number` - 当前播放进度（0-1）
 
-**关键方法**:
+**关键方法**（所有方法通过 elementStore 更新数据）:
 - `setSelectedElement(elementId)` - 设置当前编辑的元素
-- `addTrack(property)` - 添加动画轨道
-- `removeTrack(property)` - 删除动画轨道
-- `addKeyframe(property, keyframe)` - 添加关键帧
-- `removeKeyframe(property, keyframeIndex)` - 删除关键帧
-- `updateKeyframe(property, keyframeIndex, updates)` - 更新关键帧
+- `addTrack(property)` - 添加动画轨道（通过 elementStore.updateElement 更新）
+- `removeTrack(property)` - 删除动画轨道（通过 elementStore.updateElement 更新）
+- `addKeyframe(property, keyframe)` - 添加关键帧（通过 elementStore.updateElement 更新）
+- `removeKeyframe(property, keyframeIndex)` - 删除关键帧（通过 elementStore.updateElement 更新）
+- `updateKeyframe(property, keyframeIndex, updates)` - 更新关键帧（通过 elementStore.updateElement 更新）
+- `updateTrackDuration(property, newDuration)` - 更新轨道时长（通过 elementStore.updateElement 更新）
+- `setSelectedKeyframe(property, keyframeIndex)` - 设置选中的关键帧
+- `clearSelectedKeyframe()` - 清除选中的关键帧
 - `play()`, `pause()`, `stop()`, `seek(time)` - 播放控制
-- `getElementTracks(elementId)` - 获取指定元素的 tracks
+- `getElementTracks(elementId)` - 获取指定元素的 tracks（从 elementStore 获取）
+
+**设计原则**:
+- **业务逻辑层**：只负责动画相关的业务逻辑，不存储数据
+- **数据存储**：所有元素数据（包括 tracks）存储在 `elementStore` 中
+- **数据访问**：通过 `elementStore.getElement()` 和 `elementStore.updateElement()` 操作数据
 
 ### UI Store (`src/stores/uiStore.ts`)
 
@@ -288,7 +314,9 @@ UI Store (独立，全局UI状态)
 ## 关键设计决策
 
 1. **单一数据源**: Element Store 作为所有元素数据的唯一来源，避免数据不一致
-2. **向后兼容**: Canvas Store 通过计算属性代理，保持原有 API，避免大规模重构
-3. **性能优化**: 使用 Map 存储元素，查找性能 O(1)
-4. **响应式设计**: 使用 Vue 计算属性，自动响应数据变化
-5. **类型安全**: 完整的 TypeScript 类型支持
+2. **数据与业务逻辑分离**: Element Store 只管理数据（CRUD），Animation Store 只管理业务逻辑，通过 Element Store 操作数据
+3. **向后兼容**: Canvas Store 通过计算属性代理，保持原有 API，避免大规模重构
+4. **性能优化**: 使用 Map 存储元素，查找性能 O(1)
+5. **响应式设计**: 使用 Vue 计算属性，自动响应数据变化
+6. **类型安全**: 完整的 TypeScript 类型支持
+7. **默认样式值**: 新元素创建时自动应用所有可动画属性的默认值（从 `ANIMATABLE_PROPERTIES` 获取）

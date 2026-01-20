@@ -1,12 +1,13 @@
 <template>
   <n-collapse>
-    <n-collapse-item :title="title" :name="title">
+    <n-collapse-item :title="title" :name="title" default-expanded>
       <div class="property-list">
         <PropertyInput
-          v-for="property in properties"
-          :key="property"
-          :property="property"
-          :value="getPropertyValue(property)"
+          v-for="propertyConfig in properties"
+          :key="propertyConfig.name"
+          :property="propertyConfig.name"
+          :config="propertyConfig"
+          :value="propertyValues[propertyConfig.name] ?? ''"
           @update="handleUpdate"
         />
       </div>
@@ -16,13 +17,14 @@
 
 <script setup lang="ts">
 import { NCollapse, NCollapseItem } from 'naive-ui'
-import type { CanvasElement } from '@/types'
+import type { AnimatableProperty } from './animatableProperties'
 import PropertyInput from './PropertyInput.vue'
 
 interface Props {
   title: string
-  properties: string[]
-  element?: CanvasElement
+  properties: AnimatableProperty[]
+  /** 属性值映射：propertyName -> value */
+  propertyValues: Record<string, string | number>
 }
 
 const props = defineProps<Props>()
@@ -30,10 +32,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   update: [property: string, value: any]
 }>()
-
-function getPropertyValue(property: string) {
-  return props.element?.style[property] || ''
-}
 
 function handleUpdate(property: string, value: any) {
   emit('update', property, value)

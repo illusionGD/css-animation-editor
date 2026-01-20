@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useAnimationStore } from '@/stores/animationStore'
+import { useElementStore } from '@/stores/elementStore'
 import { interpolateKeyframes } from '@/utils/calculators'
 import type { CanvasElement as CanvasElementType } from '@/types'
 
@@ -45,6 +46,7 @@ const emit = defineEmits<{
 }>()
 
 const animationStore = useAnimationStore()
+const elementStore = useElementStore()
 
 const handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w']
 const isResizing = ref(false)
@@ -53,17 +55,18 @@ const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
 const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0, elementX: 0, elementY: 0 })
 
-// 计算动画样式（仅在播放时应用）
+// 计算动画样式（根据当前播放时间应用）
 const animationStyle = computed(() => {
-  if (!animationStore.isPlaying || animationStore.selectedElementId !== props.element.id) {
+  // 如果不在播放状态，不应用动画样式
+  if (!animationStore.isPlaying) {
     return {}
   }
 
   const progress = animationStore.currentProgress
   const style: Record<string, string | number> = {}
 
-  // 遍历当前元素的 tracks，计算当前时间点的属性值
-  const elementTracks = animationStore.getElementTracks(props.element.id)
+  // 遍历当前元素的 tracks，计算当前时间点的属性值（从 elementStore 获取）
+  const elementTracks = elementStore.getElementTracks(props.element.id)
   let transformStr = ''
   elementTracks.forEach(track => {
     if (track.keyframes.length > 0) {

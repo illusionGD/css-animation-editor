@@ -64,8 +64,7 @@
       <n-input
         v-model:value="editingNodeName"
         placeholder="请输入新名称"
-        @keydown.enter="confirmRename"
-        @keydown.esc="cancelRename"
+        @keydown="handleRenameKeydown"
       />
     </n-modal>
   </div>
@@ -370,6 +369,16 @@ function handleRenameNode(nodeKey: string) {
   editingNodeId.value = nodeKey
   editingNodeName.value = element.name || element.type || ''
   showRenameModal.value = true
+}
+
+function handleRenameKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    confirmRename()
+  } else if (e.key === 'Escape') {
+    e.preventDefault()
+    cancelRename()
+  }
 }
 
 function confirmRename() {
