@@ -31,7 +31,11 @@
               />
             </svg>
           </button>
-          <button class="remove-btn" title="删除通道" @click.stop="removeChannel(track.property)">
+          <button
+            class="remove-btn"
+            title="删除通道"
+            @click.stop="removeChannel(track.property)"
+          >
             <n-icon><CloseIcon /></n-icon>
           </button>
         </div>
@@ -132,11 +136,11 @@ function removeChannel(property: string) {
 
 <style lang="scss" scoped>
 .timeline-channels {
-  width: 200px;
+  flex: 1;
   height: 100%;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--n-borderColor);
+  overflow: hidden;
   background: var(--n-color);
 }
 
@@ -151,9 +155,18 @@ function removeChannel(property: string) {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--n-borderColor);
+  border-bottom: 1px solid var(--color-border);
+//   border-top: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color 0.2s;
+
+  &:first-child {
+    border-top: none;
+  }
+
+//   &:last-child {
+//     border-bottom: none;
+//   }
 
   &:hover {
     background: var(--n-colorHover);

@@ -1,4 +1,5 @@
 import type { CanvasElement, AnimationConfig } from '@/types'
+import { ANIMATION_DEFAULT_DURATION } from '@/constants'
 
 export function exportCSS(elements: CanvasElement[]): string {
   let css = ''
@@ -20,7 +21,7 @@ export function exportCSS(elements: CanvasElement[]): string {
 
     // 生成元素样式
     css += `#element-${element.id || index} {\n`
-    css += `  animation: ${animationName} ${element.animation?.duration || 1000}ms ${element.animation?.easing || 'ease'} ${element.animation?.iterations || 1};\n`
+    css += `  animation: ${animationName} ${element.animation?.duration || ANIMATION_DEFAULT_DURATION}ms ${element.animation?.easing || 'ease'} ${element.animation?.iterations || 1};\n`
     css += `}\n\n`
   })
 

@@ -1,6 +1,9 @@
 <template>
   <div class="resizable-layout">
-    <div class="layout-container" :style="containerStyle">
+    <div
+      class="layout-container"
+      :style="containerStyle"
+    >
       <!-- 左侧边栏 -->
       <div
         v-if="showLeft"
@@ -8,13 +11,20 @@
         :class="{ 'dark-theme': isDark }"
         :style="{ width: `${leftWidth}px` }"
       >
-        <slot name="left"></slot>
-        <div class="resize-handle left-handle" @mousedown="startResize('left', $event)"></div>
+        <slot name="left" />
+        <div
+          class="resize-handle left-handle"
+          @mousedown="startResize('left', $event)"
+        />
       </div>
 
       <!-- 中间内容区 -->
-      <div class="main-content" :class="{ 'dark-theme': isDark }" :style="mainContentStyle">
-        <slot name="main"></slot>
+      <div
+        class="main-content"
+        :class="{ 'dark-theme': isDark }"
+        :style="mainContentStyle"
+      >
+        <slot name="main" />
       </div>
 
       <!-- 右侧边栏 -->
@@ -24,8 +34,11 @@
         :class="{ 'dark-theme': isDark }"
         :style="{ width: `${rightWidth}px` }"
       >
-        <div class="resize-handle right-handle" @mousedown="startResize('right', $event)"></div>
-        <slot name="right"></slot>
+        <div
+          class="resize-handle right-handle"
+          @mousedown="startResize('right', $event)"
+        />
+        <slot name="right" />
       </div>
     </div>
 
@@ -36,8 +49,11 @@
       :class="{ 'dark-theme': isDark }"
       :style="{ height: `${bottomHeight}px` }"
     >
-      <div class="resize-handle top-handle" @mousedown="startResize('bottom', $event)"></div>
-      <slot name="bottom"></slot>
+      <div
+        class="resize-handle top-handle"
+        @mousedown="startResize('bottom', $event)"
+      />
+      <slot name="bottom" />
     </div>
   </div>
 </template>
@@ -169,7 +185,7 @@ onUnmounted(() => {
 .sidebar {
   position: relative;
   background: var(--n-color);
-  border-right: 1px solid var(--n-borderColor);
+  border-right: 1px solid var(--color-border);
   overflow: hidden;
 
   // 白天主题添加阴影
@@ -184,7 +200,7 @@ onUnmounted(() => {
 
 .right-sidebar {
   border-right: none;
-  border-left: 1px solid var(--n-borderColor);
+  border-left: 1px solid var(--color-border);
 
   // 白天主题添加阴影
   &:not(.dark-theme) {
@@ -215,7 +231,7 @@ onUnmounted(() => {
 .bottom-panel {
   position: relative;
   background: var(--n-color);
-  border-top: 1px solid var(--n-borderColor);
+  border-top: 1px solid var(--color-border);
   overflow: hidden;
 
   // 白天主题添加阴影

@@ -1,10 +1,20 @@
 <template>
   <div class="left-sidebar">
-    <n-tabs v-model:value="activeTab" type="line" animated>
-      <n-tab-pane name="nodeTree" tab="节点树">
+    <n-tabs
+      v-model:value="activeTab"
+      type="line"
+      animated
+    >
+      <n-tab-pane
+        name="nodeTree"
+        tab="节点树"
+      >
         <NodeTree />
       </n-tab-pane>
-      <n-tab-pane name="presets" tab="预设库">
+      <n-tab-pane
+        name="presets"
+        tab="预设库"
+      >
         <PresetPanel />
       </n-tab-pane>
     </n-tabs>

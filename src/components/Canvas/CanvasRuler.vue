@@ -1,16 +1,24 @@
 <template>
-  <div v-if="props.type === 'horizontal'" class="ruler-horizontal" :style="horizontalStyle">
+  <div
+    v-if="props.type === 'horizontal'"
+    class="ruler-horizontal"
+    :style="horizontalStyle"
+  >
     <div
       v-for="tick in horizontalTicks"
-      class="ruler-tick"
       :key="`h-${tick.value}`"
+      class="ruler-tick"
       :class="{ 'ruler-tick-major': tick.isMajor }"
       :style="{ left: `${tick.position}px` }"
     >
       <span class="ruler-label">{{ tick.label }}</span>
     </div>
   </div>
-  <div v-else class="ruler-vertical" :style="verticalStyle">
+  <div
+    v-else
+    class="ruler-vertical"
+    :style="verticalStyle"
+  >
     <div
       v-for="tick in verticalTicks"
       :key="`v-${tick.value}`"

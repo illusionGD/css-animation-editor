@@ -1,5 +1,8 @@
 <template>
-  <div class="timeline-grid" :style="gridStyle">
+  <div
+    class="timeline-grid"
+    :style="gridStyle"
+  >
     <div
       v-for="tick in timeTicks"
       :key="`tick-${tick.time}`"
@@ -7,14 +10,18 @@
       :class="{ 'grid-tick-major': tick.isMajor }"
       :style="{ left: `${tick.position}%` }"
     >
-      <div class="grid-line"></div>
-      <span v-if="tick.isMajor" class="grid-label">{{ tick.label }}</span>
+      <div class="grid-line" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import {
+  TIMELINE_BASE_INTERVAL,
+  TIMELINE_INTERVALS,
+  TIMELINE_DEFAULT_CONTENT_WIDTH
+} from './constants'
 
 interface Props {
   duration: number // 总时长（毫秒）
@@ -24,26 +31,23 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   zoom: 1,
-  width: 1000
+  width: TIMELINE_DEFAULT_CONTENT_WIDTH
 })
 
 // 根据缩放级别计算合适的时间间隔
 const timeInterval = computed(() => {
-  // 基础间隔：100ms
-  const baseInterval = 100
   // 根据缩放级别调整间隔
   // zoom 越大，间隔越小（显示更精细）
   // zoom 越小，间隔越大（显示更粗略）
-  const adjustedInterval = baseInterval / props.zoom
+  const adjustedInterval = TIMELINE_BASE_INTERVAL / props.zoom
 
   // 根据调整后的间隔，选择最接近的标准间隔
-  const intervals = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
-  for (const interval of intervals) {
+  for (const interval of TIMELINE_INTERVALS) {
     if (adjustedInterval <= interval) {
       return interval
     }
   }
-  return 10000
+  return TIMELINE_INTERVALS[TIMELINE_INTERVALS.length - 1]
 })
 
 // 主刻度间隔（通常是次刻度的5倍）
@@ -63,7 +67,7 @@ const pixelsPerInterval = computed(() => {
 
 // 生成时间刻度
 const timeTicks = computed(() => {
-  const ticks: Array<{ time: number; position: number; label: string; isMajor: boolean }> = []
+  const ticks: Array<{ time: number; position: number; isMajor: boolean }> = []
 
   // 如果像素间隔太小（小于10px），不显示次刻度
   const showMinorTicks = pixelsPerInterval.value >= 10
@@ -81,27 +85,12 @@ const timeTicks = computed(() => {
     ticks.push({
       time,
       position,
-      label: formatTime(time),
       isMajor
     })
   }
 
   return ticks
 })
-
-// 格式化时间显示
-function formatTime(ms: number): string {
-  if (ms < 1000) {
-    return `${ms}ms`
-  }
-  const seconds = ms / 1000
-  if (seconds < 60) {
-    return `${seconds.toFixed(1)}s`
-  }
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${minutes}:${remainingSeconds.toFixed(1)}`
-}
 
 const gridStyle = computed(() => ({
   width: '100%',
@@ -136,14 +125,14 @@ const gridStyle = computed(() => ({
 
   &.grid-tick-major {
     .grid-line {
-      background: var(--n-borderColor);
+      background: var(--color-border);
       opacity: 0.6;
     }
   }
 
   &:not(.grid-tick-major) {
     .grid-line {
-      background: var(--n-borderColor);
+      background: var(--color-border);
       opacity: 0.3;
     }
   }
@@ -152,17 +141,6 @@ const gridStyle = computed(() => ({
 .grid-line {
   width: 1px;
   height: 100%;
-  background: var(--n-borderColor);
-}
-
-.grid-label {
-  position: absolute;
-  top: 2px;
-  font-size: 10px;
-  color: var(--n-textColor2);
-  white-space: nowrap;
-  background: var(--n-color);
-  padding: 0 2px;
-  line-height: 1.2;
+  background: var(--color-border);
 }
 </style>

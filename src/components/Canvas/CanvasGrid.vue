@@ -1,12 +1,19 @@
 <template>
-  <div class="canvas-grid" :style="gridStyle">
-    <canvas ref="gridCanvas" class="grid-canvas" />
+  <div
+    class="canvas-grid"
+    :style="gridStyle"
+  >
+    <canvas
+      ref="gridCanvas"
+      class="grid-canvas"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useUIStore } from '@/stores/uiStore'
+import { CANVAS_DEFAULT_WIDTH, CANVAS_DEFAULT_HEIGHT } from '@/constants'
 
 interface Props {
   gridSize: number
@@ -44,8 +51,8 @@ function drawGrid() {
 
   // 获取容器（canvas-wrapper）的尺寸
   const rect = container.getBoundingClientRect()
-  const width = rect.width || container.clientWidth || 1920
-  const height = rect.height || container.clientHeight || 1080
+  const width = rect.width || container.clientWidth || CANVAS_DEFAULT_WIDTH
+  const height = rect.height || container.clientHeight || CANVAS_DEFAULT_HEIGHT
 
   // 设置 canvas 尺寸（考虑设备像素比）
   const dpr = window.devicePixelRatio || 1

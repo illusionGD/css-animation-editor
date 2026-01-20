@@ -10,7 +10,6 @@ export interface CanvasElement {
   style: CSSProperties
   animation: AnimationConfig
   position: { x: number; y: number }
-  size: { width: number; height: number }
   name?: string
   visible?: boolean
   locked?: boolean

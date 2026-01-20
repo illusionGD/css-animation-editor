@@ -1,5 +1,8 @@
 <template>
-  <div ref="containerRef" class="canvas-container">
+  <div
+    ref="containerRef"
+    class="canvas-container"
+  >
     <div class="canvas-ruler-wrapper">
       <CanvasRuler
         v-if="canvasConfig.showRuler"
@@ -17,7 +20,11 @@
         :offset-x="canvasConfig.offsetX"
         :offset-y="canvasConfig.offsetY"
       />
-      <div class="canvas-wrapper" @wheel="handleWheel" @contextmenu.prevent>
+      <div
+        class="canvas-wrapper"
+        @wheel="handleWheel"
+        @contextmenu.prevent
+      >
         <CanvasGrid
           v-if="canvasConfig.showGrid"
           :grid-size="canvasConfig.gridSize"
@@ -48,7 +55,10 @@
             @select="handleElementSelect"
             @update="handleElementUpdate"
           />
-          <SelectionBox v-if="selectionBox" :box="selectionBox" />
+          <SelectionBox
+            v-if="selectionBox"
+            :box="selectionBox"
+          />
         </div>
       </div>
     </div>
@@ -61,6 +71,7 @@ import { useCanvasStore } from '@/stores/canvasStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useAnimationStore } from '@/stores/animationStore'
 import { clamp } from '@/utils/calculators'
+import { CANVAS_DEFAULT_OFFSET_X, CANVAS_DEFAULT_OFFSET_Y } from '@/constants'
 import CanvasRuler from './CanvasRuler.vue'
 import CanvasGrid from './CanvasGrid.vue'
 import CanvasElement from './CanvasElement.vue'
@@ -229,8 +240,8 @@ function initializeCanvasZoom() {
 
   canvasStore.updateCanvasConfig({
     zoom: scale,
-    offsetX: Math.max(20, offsetX), // 至少为标尺留出空间
-    offsetY: Math.max(20, offsetY)
+    offsetX: Math.max(CANVAS_DEFAULT_OFFSET_X, offsetX), // 至少为标尺留出空间
+    offsetY: Math.max(CANVAS_DEFAULT_OFFSET_Y, offsetY)
   })
 
   isInitialized.value = true

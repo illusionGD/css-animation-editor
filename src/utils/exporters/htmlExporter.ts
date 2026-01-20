@@ -1,5 +1,7 @@
 import type { CanvasElement } from '@/types'
 import { exportCSS } from './cssExporter'
+import { parseStyleValue } from '../calculators'
+import { ELEMENT_DEFAULT_WIDTH, ELEMENT_DEFAULT_HEIGHT, COLOR_ELEMENT_DEFAULT_BACKGROUND } from '@/constants'
 
 export function exportHTML(elements: CanvasElement[]): string {
   const css = exportCSS(elements)
@@ -18,10 +20,14 @@ ${css}
 `
 
   elements.forEach((element, index) => {
+    // 从 style 中解析宽高
+    const width = parseStyleValue(element.style.width, ELEMENT_DEFAULT_WIDTH)
+    const height = parseStyleValue(element.style.height, ELEMENT_DEFAULT_HEIGHT)
+    
     html += `  <div id="element-${element.id || index}" style="
-    width: ${element.size.width}px;
-    height: ${element.size.height}px;
-    background: ${element.style.backgroundColor || '#18a058'};
+    width: ${width}px;
+    height: ${height}px;
+    background: ${element.style.backgroundColor || COLOR_ELEMENT_DEFAULT_BACKGROUND};
     position: absolute;
     left: ${element.position.x}px;
     top: ${element.position.y}px;

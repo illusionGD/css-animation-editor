@@ -2,15 +2,27 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CanvasElement, AnimationConfig } from '@/types'
 import { ANIMATABLE_PROPERTIES } from '@/components/PropertyPanel/animatableProperties'
+import {
+  ANIMATION_DEFAULT_DURATION,
+  ANIMATION_DEFAULT_DELAY,
+  ANIMATION_DEFAULT_ITERATIONS,
+  ANIMATION_DEFAULT_DIRECTION,
+  ANIMATION_DEFAULT_FILL_MODE,
+  ANIMATION_DEFAULT_EASING,
+  ELEMENT_DEFAULT_WIDTH_PX,
+  ELEMENT_DEFAULT_HEIGHT_PX,
+  ELEMENT_DEFAULT_POSITION_X,
+  ELEMENT_DEFAULT_POSITION_Y
+} from '@/constants'
 
 // 默认动画配置
 const defaultAnimation: AnimationConfig = {
-  duration: 1000,
-  delay: 0,
-  iterations: 1,
-  direction: 'normal',
-  fillMode: 'forwards',
-  easing: 'ease-in-out',
+  duration: ANIMATION_DEFAULT_DURATION,
+  delay: ANIMATION_DEFAULT_DELAY,
+  iterations: ANIMATION_DEFAULT_ITERATIONS,
+  direction: ANIMATION_DEFAULT_DIRECTION,
+  fillMode: ANIMATION_DEFAULT_FILL_MODE,
+  easing: ANIMATION_DEFAULT_EASING,
   keyframes: []
 }
 
@@ -84,13 +96,20 @@ export const useElementStore = defineStore('element', () => {
     const defaultStyle = getDefaultStyle()
     const mergedStyle = { ...defaultStyle, ...(data.style || {}) }
 
+    // 确保 width 和 height 在 style 中（如果没有则使用默认值）
+    if (!mergedStyle.width) {
+      mergedStyle.width = ELEMENT_DEFAULT_WIDTH_PX
+    }
+    if (!mergedStyle.height) {
+      mergedStyle.height = ELEMENT_DEFAULT_HEIGHT_PX
+    }
+
     const element: CanvasElement = {
       id,
       type: data.type || 'div',
       style: mergedStyle,
       animation: data.animation || defaultAnimation,
-      position: data.position || { x: 0, y: 0 },
-      size: data.size || { width: 100, height: 100 },
+      position: data.position || { x: ELEMENT_DEFAULT_POSITION_X, y: ELEMENT_DEFAULT_POSITION_Y },
       name: data.name,
       visible: data.visible !== false,
       locked: data.locked || false,

@@ -76,3 +76,16 @@ export function pixelToTime(pixel: number, width: number, duration: number): num
 export function timeToPixel(time: number, width: number, duration: number): number {
   return (time / duration) * width
 }
+
+/**
+ * 从 CSS 样式值中解析数值（支持 "100px"、"100" 或数字格式）
+ * @param value CSS 样式值（可能是字符串如 "100px"、"100" 或数字）
+ * @param defaultValue 如果解析失败时返回的默认值
+ * @returns 解析后的数值
+ */
+export function parseStyleValue(value: string | number | undefined, defaultValue: number): number {
+  if (value === undefined || value === null) return defaultValue
+  if (typeof value === 'number') return value
+  const num = parseFloat(String(value))
+  return isNaN(num) ? defaultValue : num
+}

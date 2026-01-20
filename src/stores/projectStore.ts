@@ -5,6 +5,14 @@ import { storageAdapter } from '@/services/storage'
 import { useCanvasStore } from './canvasStore'
 import { useAnimationStore } from './animationStore'
 import { useElementStore } from './elementStore'
+import {
+  CANVAS_DEFAULT_WIDTH,
+  CANVAS_DEFAULT_HEIGHT,
+  CANVAS_DEFAULT_BACKGROUND_COLOR,
+  CANVAS_DEFAULT_GRID_SIZE,
+  CANVAS_DEFAULT_SHOW_GRID,
+  CANVAS_DEFAULT_SHOW_RULER
+} from '@/constants'
 
 export const useProjectStore = defineStore('project', () => {
   const canvasStore = useCanvasStore()
@@ -37,12 +45,12 @@ export const useProjectStore = defineStore('project', () => {
         elements: [],
         animations: [],
         settings: {
-          canvasWidth: 1920,
-          canvasHeight: 1080,
-          backgroundColor: '#ffffff',
-          gridSize: 20,
-          showGrid: true,
-          showRuler: true
+          canvasWidth: CANVAS_DEFAULT_WIDTH,
+          canvasHeight: CANVAS_DEFAULT_HEIGHT,
+          backgroundColor: CANVAS_DEFAULT_BACKGROUND_COLOR,
+          gridSize: CANVAS_DEFAULT_GRID_SIZE,
+          showGrid: CANVAS_DEFAULT_SHOW_GRID,
+          showRuler: CANVAS_DEFAULT_SHOW_RULER
         }
       }
     }

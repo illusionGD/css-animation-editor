@@ -2,12 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AnimationTrack, Keyframe } from '@/types'
 import { useElementStore } from './elementStore'
+import { ANIMATION_UI_DEFAULT_DURATION, ANIMATION_MIN_DURATION } from '@/constants'
 
 export const useAnimationStore = defineStore('animation', () => {
   // 状态
   const isPlaying = ref(false)
   const currentTime = ref(0)
-  const duration = ref(3000) // 默认3秒
+  const duration = ref(ANIMATION_UI_DEFAULT_DURATION)
   const selectedElementId = ref<string | null>(null)
   // 选中的关键帧：{ property: string, keyframeIndex: number } | null
   const selectedKeyframe = ref<{ property: string; keyframeIndex: number } | null>(null)
@@ -29,7 +30,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   // 方法
   function setDuration(newDuration: number) {
-    duration.value = Math.max(100, newDuration)
+    duration.value = Math.max(ANIMATION_MIN_DURATION, newDuration)
   }
 
   function setSelectedElement(elementId: string | null) {

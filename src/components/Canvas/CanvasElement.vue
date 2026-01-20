@@ -9,7 +9,10 @@
     <div class="element-content">
       <slot>{{ element.type }}</slot>
     </div>
-    <div v-if="selected" class="element-handles">
+    <div
+      v-if="selected"
+      class="element-handles"
+    >
       <div
         v-for="handle in handles"
         :key="handle"
@@ -25,7 +28,16 @@
 import { computed, ref } from 'vue'
 import { useAnimationStore } from '@/stores/animationStore'
 import { useElementStore } from '@/stores/elementStore'
-import { interpolateKeyframes } from '@/utils/calculators'
+import { interpolateKeyframes, parseStyleValue } from '@/utils/calculators'
+import {
+  ELEMENT_DEFAULT_WIDTH,
+  ELEMENT_DEFAULT_HEIGHT,
+  ELEMENT_MIN_SIZE,
+  ELEMENT_DEFAULT_WIDTH_PX,
+  ELEMENT_DEFAULT_HEIGHT_PX,
+  CANVAS_DEFAULT_WIDTH,
+  CANVAS_DEFAULT_HEIGHT
+} from '@/constants'
 import type { CanvasElement as CanvasElementType } from '@/types'
 
 interface Props {
@@ -54,6 +66,10 @@ const resizeHandle = ref<string | null>(null)
 const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
 const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0, elementX: 0, elementY: 0 })
+
+// 获取元素的宽高（从 style 中读取）
+const elementWidth = computed(() => parseStyleValue(props.element.style.width, ELEMENT_DEFAULT_WIDTH))
+const elementHeight = computed(() => parseStyleValue(props.element.style.height, ELEMENT_DEFAULT_HEIGHT))
 
 // 计算动画样式（根据当前播放时间应用）
 const animationStyle = computed(() => {
@@ -102,15 +118,25 @@ const animationStyle = computed(() => {
   return style
 })
 
-const elementStyle = computed(() => ({
-  position: 'absolute' as const,
-  left: `${props.element.position.x}px`,
-  top: `${props.element.position.y}px`,
-  width: `${props.element.size.width}px`,
-  height: `${props.element.size.height}px`,
-  ...props.element.style,
-  ...animationStyle.value
-}))
+const elementStyle = computed(() => {
+  // 从 style 中获取宽高，如果没有则使用默认值
+  const width = props.element.style.width || ELEMENT_DEFAULT_WIDTH_PX
+  const height = props.element.style.height || ELEMENT_DEFAULT_HEIGHT_PX
+  
+  // 确保宽高是字符串格式（如果是数字则添加 px）
+  const widthStr = typeof width === 'number' ? `${width}px` : String(width)
+  const heightStr = typeof height === 'number' ? `${height}px` : String(height)
+  
+  return {
+    position: 'absolute' as const,
+    left: `${props.element.position.x}px`,
+    top: `${props.element.position.y}px`,
+    width: widthStr,
+    height: heightStr,
+    ...props.element.style,
+    ...animationStyle.value
+  }
+})
 
 function handleClick(e: MouseEvent) {
   emit('select', props.element.id, e.ctrlKey || e.metaKey)
@@ -170,8 +196,8 @@ function handleDrag(e: MouseEvent) {
   const newY = dragStart.value.elementY + deltaY
 
   // 限制在画布范围内
-  const maxX = (props.canvasWidth || 1920) - props.element.size.width
-  const maxY = (props.canvasHeight || 1080) - props.element.size.height
+  const maxX = (props.canvasWidth || CANVAS_DEFAULT_WIDTH) - elementWidth.value
+  const maxY = (props.canvasHeight || CANVAS_DEFAULT_HEIGHT) - elementHeight.value
 
   emit('update', props.element.id, {
     position: {
@@ -196,8 +222,8 @@ function startResize(handle: string, e: MouseEvent) {
   resizeStart.value = {
     x: e.clientX,
     y: e.clientY,
-    width: props.element.size.width,
-    height: props.element.size.height
+    width: elementWidth.value,
+    height: elementHeight.value
   }
 
   document.addEventListener('mousemove', handleResize)
@@ -225,21 +251,25 @@ function handleResize(e: MouseEvent) {
   const deltaY = (e.clientY - resizeStart.value.y) / zoom
 
   const updates: Partial<CanvasElementType> = {
-    size: { ...props.element.size }
+    style: { ...props.element.style }
   }
 
   if (resizeHandle.value.includes('e')) {
-    updates.size!.width = Math.max(20, resizeStart.value.width + deltaX)
+    const newWidth = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.width + deltaX)
+    updates.style!.width = `${newWidth}px`
   }
   if (resizeHandle.value.includes('w')) {
-    updates.size!.width = Math.max(20, resizeStart.value.width - deltaX)
+    const newWidth = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.width - deltaX)
+    updates.style!.width = `${newWidth}px`
     updates.position = { ...props.element.position, x: props.element.position.x + deltaX }
   }
   if (resizeHandle.value.includes('s')) {
-    updates.size!.height = Math.max(20, resizeStart.value.height + deltaY)
+    const newHeight = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.height + deltaY)
+    updates.style!.height = `${newHeight}px`
   }
   if (resizeHandle.value.includes('n')) {
-    updates.size!.height = Math.max(20, resizeStart.value.height - deltaY)
+    const newHeight = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.height - deltaY)
+    updates.style!.height = `${newHeight}px`
     updates.position = { ...props.element.position, y: props.element.position.y + deltaY }
   }
 

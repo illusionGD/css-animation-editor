@@ -107,6 +107,53 @@ export const useElementStore = defineStore('element', () => {
 })
 ```
 
+## 常量管理规范
+
+### 常量组织原则
+
+采用**混合方案**，根据常量的使用范围决定存放位置：
+
+1. **全局常量** (`src/constants/`) - 跨模块共享的常量
+   - 画布相关：`canvas.ts`
+   - 元素相关：`element.ts`
+   - 动画相关：`animation.ts`
+   - 颜色相关：`colors.ts`
+   - 统一导出：`index.ts`
+
+2. **模块内常量** (`模块/constants.ts`) - 模块专用的常量
+   - 时间轴相关：`src/components/Timeline/constants.ts`
+   - 布局相关：`src/stores/uiStore.ts`（小常量可直接放在 Store 文件内）
+
+### 判断标准
+
+**放在全局 `src/constants/` 如果：**
+- ✅ 常量被 2 个或更多模块使用
+- ✅ 需要保证跨模块的一致性
+- ✅ 是核心业务常量（如画布尺寸、元素默认值）
+
+**放在模块内 `constants.ts` 如果：**
+- ✅ 常量只在单个模块内使用
+- ✅ 是模块特定的配置
+- ✅ 修改不会影响其他模块
+
+### 常量命名规范
+
+- 使用 `UPPER_SNAKE_CASE` 命名
+- 常量名应清晰描述其用途
+- 必须添加 JSDoc 注释说明用途和单位
+
+### 示例
+
+```typescript
+// src/constants/element.ts
+/** 元素默认宽度（像素） */
+export const ELEMENT_DEFAULT_WIDTH = 100
+
+// src/components/Timeline/constants.ts
+/** 时间轴基础间隔（毫秒） */
+export const TIMELINE_BASE_INTERVAL = 100
+```
+
 ## Git提交规范
 
 - feat: 新功能

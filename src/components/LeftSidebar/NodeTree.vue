@@ -77,6 +77,8 @@ import { useNodeTreeStore } from '@/stores/nodeTreeStore'
 import { useCanvasStore } from '@/stores/canvasStore'
 import { useElementStore } from '@/stores/elementStore'
 import { useAnimationStore } from '@/stores/animationStore'
+import { parseStyleValue } from '@/utils/calculators'
+import { ELEMENT_DEFAULT_WIDTH, ELEMENT_DEFAULT_HEIGHT } from '@/constants'
 import { Search, Add, Trash, Create } from '@vicons/ionicons5'
 import type { TreeNode, CanvasElement } from '@/types'
 
@@ -311,11 +313,12 @@ function addChildElement(parentElement: CanvasElement) {
   // 获取父元素的位置和尺寸，子元素放在父元素内部
   const parentX = parentElement.position.x
   const parentY = parentElement.position.y
-  const parentWidth = parentElement.size.width
-  const parentHeight = parentElement.size.height
+  // 从 style 中解析宽高
+  const parentWidth = parseStyleValue(parentElement.style.width, ELEMENT_DEFAULT_WIDTH)
+  const parentHeight = parseStyleValue(parentElement.style.height, ELEMENT_DEFAULT_HEIGHT)
 
-  const _width = 100
-  const _height = 80
+  const _width = ELEMENT_DEFAULT_WIDTH
+  const _height = ELEMENT_DEFAULT_HEIGHT
   const _x = parentX + (parentWidth - _width) / 2
   const _y = parentY + (parentHeight - _height) / 2
 
@@ -325,10 +328,6 @@ function addChildElement(parentElement: CanvasElement) {
     position: {
       x: _x,
       y: _y
-    },
-    size: {
-      width: _width,
-      height: _height
     },
     name: `${parentElement.name || '元素'}-子元素`
   })
@@ -419,7 +418,7 @@ function cancelRename() {
 
 .node-tree-header {
   padding: 12px;
-  border-bottom: 1px solid var(--n-borderColor);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .header-top {

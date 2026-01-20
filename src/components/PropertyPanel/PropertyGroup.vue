@@ -1,6 +1,10 @@
 <template>
   <n-collapse>
-    <n-collapse-item :title="title" :name="title" default-expanded>
+    <n-collapse-item
+      :title="title"
+      :name="title"
+      default-expanded
+    >
       <div class="property-list">
         <PropertyInput
           v-for="propertyConfig in properties"

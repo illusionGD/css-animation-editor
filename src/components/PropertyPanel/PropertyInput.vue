@@ -1,6 +1,9 @@
 <template>
   <div class="property-input">
-    <n-tooltip trigger="hover" placement="top">
+    <n-tooltip
+      trigger="hover"
+      placement="top"
+    >
       <template #trigger>
         <label class="property-label">{{ config?.label || property }}</label>
       </template>
@@ -19,7 +22,10 @@
         :placeholder="config.defaultValue?.toString()"
         @update:value="handleNumberUpdate"
       >
-        <template v-if="config.unit" #suffix>
+        <template
+          v-if="config.unit"
+          #suffix
+        >
           <span class="unit">{{ config.unit }}</span>
         </template>
       </n-input-number>

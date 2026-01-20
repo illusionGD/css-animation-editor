@@ -1,12 +1,21 @@
 <template>
-  <n-layout-header class="header" :class="{ 'dark-theme': isDark }" bordered>
+  <n-layout-header
+    class="header"
+    :class="{ 'dark-theme': isDark }"
+    bordered
+  >
     <div class="header-content">
       <div class="header-left">
-        <h1 class="title">CSS动画可视化编辑器</h1>
+        <h1 class="title">
+          CSS动画可视化编辑器
+        </h1>
       </div>
       <div class="header-right">
         <n-space>
-          <n-button quaternary @click="toggleTheme">
+          <n-button
+            quaternary
+            @click="toggleTheme"
+          >
             <template #icon>
               <n-icon>
                 <SunIcon v-if="isDark" />
@@ -14,7 +23,10 @@
               </n-icon>
             </template>
           </n-button>
-          <n-button quaternary @click="showSettings = true">
+          <n-button
+            quaternary
+            @click="showSettings = true"
+          >
             <template #icon>
               <n-icon><SettingsIcon /></n-icon>
             </template>

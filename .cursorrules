@@ -46,6 +46,15 @@
 - 格式化相关：`src/utils/formatters.ts`
 - 计算相关：`src/utils/calculators.ts`
 
+## 常量管理
+- 全局常量：`src/constants/`（跨模块共享）
+  - 画布相关：`canvas.ts`
+  - 元素相关：`element.ts`
+  - 动画相关：`animation.ts`
+  - 颜色相关：`colors.ts`
+- 模块内常量：`模块/constants.ts`（模块专用）
+  - 时间轴相关：`src/components/Timeline/constants.ts`
+
 ## 数据存储
 - 使用 StorageAdapter 抽象层访问数据
 - 当前使用 LocalStorageAdapter

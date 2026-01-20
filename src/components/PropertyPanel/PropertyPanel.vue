@@ -2,13 +2,23 @@
   <div class="property-panel">
     <div class="property-panel-header">
       <h3>属性面板</h3>
-      <n-text v-if="hasSelection && selectedElement" depth="3" class="element-name">
+      <n-text
+        v-if="hasSelection && selectedElement"
+        depth="3"
+        class="element-name"
+      >
         {{ selectedElement.name || selectedElement.id }}
       </n-text>
     </div>
     <div class="property-panel-content">
-      <n-empty v-if="!hasSelection" description="请选择一个元素" />
-      <div v-else class="property-groups">
+      <n-empty
+        v-if="!hasSelection"
+        description="请选择一个元素"
+      />
+      <div
+        v-else
+        class="property-groups"
+      >
         <PropertyGroup
           v-for="group in propertyGroups"
           :key="group.name"
@@ -187,13 +197,9 @@ function handleUpdate(property: string, value: any) {
   const element = selectedElement.value
   const updates: Partial<CanvasElement> = {}
 
-  // 处理 width/height - 同时更新 size 和 style
+  // 处理 width/height - 只更新 style
   if (property === 'width' || property === 'height') {
     const numValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0
-    updates.size = {
-      ...element.size,
-      [property]: numValue
-    }
     updates.style = {
       ...element.style,
       [property]: `${numValue}px`
@@ -274,7 +280,7 @@ function handleUpdate(property: string, value: any) {
 
 .property-panel-header {
   padding: 16px;
-  border-bottom: 1px solid var(--n-borderColor);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;

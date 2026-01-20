@@ -74,6 +74,10 @@ export function useKeyboardShortcuts() {
     {
       key: 'Delete',
       handler: () => {
+        // 如果有关键帧被选中，不删除元素（由时间轴组件处理关键帧删除）
+        if (animationStore.selectedKeyframe) {
+          return
+        }
         canvasStore.selectedElementIds.forEach(id => {
           canvasStore.removeElement(id)
         })

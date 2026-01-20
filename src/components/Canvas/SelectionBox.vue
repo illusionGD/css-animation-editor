@@ -1,5 +1,8 @@
 <template>
-  <div class="selection-box" :style="boxStyle"></div>
+  <div
+    class="selection-box"
+    :style="boxStyle"
+  />
 </template>
 
 <script setup lang="ts">

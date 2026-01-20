@@ -2,7 +2,10 @@
   <n-config-provider :theme="uiStore.theme">
     <n-message-provider>
       <n-dialog-provider>
-        <div :data-theme="isDark ? 'dark' : 'light'" :class="{ 'dark-theme': isDark }">
+        <div
+          :data-theme="isDark ? 'dark' : 'light'"
+          :class="{ 'dark-theme': isDark }"
+        >
           <n-layout class="app-layout">
             <Header />
             <ResizableLayout>

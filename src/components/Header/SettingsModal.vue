@@ -1,25 +1,35 @@
 <template>
   <n-modal
     :show="show"
-    @update:show="val => emit('update:show', val)"
     preset="dialog"
     title="设置"
     style="width: 600px"
+    @update:show="val => emit('update:show', val)"
   >
-    <n-form :model="settings" label-placement="left" label-width="120px">
+    <n-form
+      :model="settings"
+      label-placement="left"
+      label-width="120px"
+    >
       <n-form-item label="导出格式">
         <n-radio-group v-model:value="settings.exportFormat">
-          <n-radio value="css">CSS代码</n-radio>
-          <n-radio value="html">CSS+HTML</n-radio>
-          <n-radio value="json">JSON</n-radio>
+          <n-radio value="css">
+            CSS代码
+          </n-radio>
+          <n-radio value="html">
+            CSS+HTML
+          </n-radio>
+          <n-radio value="json">
+            JSON
+          </n-radio>
         </n-radio-group>
       </n-form-item>
       <n-form-item label="默认动画时长">
         <n-input-number
           v-model:value="settings.defaultDuration"
-          :min="100"
-          :max="10000"
-          :step="100"
+          :min="ANIMATION_MIN_DURATION"
+          :max="ANIMATION_MAX_DURATION"
+          :step="TIMELINE_DURATION_STEP"
           style="width: 200px"
         />
         <span style="margin-left: 10px">毫秒</span>
@@ -30,8 +40,15 @@
     </n-form>
     <template #action>
       <n-space>
-        <n-button @click="handleCancel">取消</n-button>
-        <n-button type="primary" @click="handleConfirm">确定</n-button>
+        <n-button @click="handleCancel">
+          取消
+        </n-button>
+        <n-button
+          type="primary"
+          @click="handleConfirm"
+        >
+          确定
+        </n-button>
       </n-space>
     </template>
   </n-modal>
@@ -51,6 +68,8 @@ import {
   NSpace
 } from 'naive-ui'
 import { useUIStore } from '@/stores/uiStore'
+import { ANIMATION_MIN_DURATION, ANIMATION_MAX_DURATION } from '@/constants'
+import { TIMELINE_DURATION_STEP } from '@/components/Timeline/constants'
 
 interface Props {
   show: boolean

@@ -14,7 +14,10 @@
       </n-input>
     </div>
     <div class="preset-panel-content">
-      <div v-if="presetStore.filteredPresets.length > 0" class="preset-list">
+      <div
+        v-if="presetStore.filteredPresets.length > 0"
+        class="preset-list"
+      >
         <div
           v-for="preset in presetStore.filteredPresets"
           :key="preset.id"
@@ -24,7 +27,10 @@
           <div class="preset-name">
             {{ preset.name }}
           </div>
-          <div v-if="preset.description" class="preset-description">
+          <div
+            v-if="preset.description"
+            class="preset-description"
+          >
             {{ preset.description }}
           </div>
           <div class="preset-category">
@@ -32,7 +38,10 @@
           </div>
         </div>
       </div>
-      <n-empty v-else description="暂无预设" />
+      <n-empty
+        v-else
+        description="暂无预设"
+      />
     </div>
   </div>
 </template>
@@ -181,7 +190,7 @@ function applyPreset(preset: PresetSchema) {
 
 .preset-panel-header {
   padding: 12px;
-  border-bottom: 1px solid var(--n-borderColor);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .preset-panel-content {
@@ -197,7 +206,7 @@ function applyPreset(preset: PresetSchema) {
 .preset-item {
   padding: 12px;
   margin-bottom: 8px;
-  border: 1px solid var(--n-borderColor);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;

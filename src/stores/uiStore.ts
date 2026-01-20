@@ -2,18 +2,27 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { darkTheme } from 'naive-ui'
 import type { GlobalTheme } from 'naive-ui'
+import { ANIMATION_UI_DEFAULT_DURATION } from '@/constants'
+
+// 布局相关常量（只在 UI Store 中使用）
+const SIDEBAR_DEFAULT_WIDTH = 300
+const SIDEBAR_MIN_WIDTH = 200
+const SIDEBAR_MAX_WIDTH = 600
+const TIMELINE_DEFAULT_HEIGHT = 200
+const TIMELINE_MIN_HEIGHT = 150
+const TIMELINE_MAX_HEIGHT = 400
 
 export const useUIStore = defineStore('ui', () => {
   // 状态
   const isDarkMode = ref(true) // 使用布尔值来跟踪主题状态
   const theme = computed<GlobalTheme | null>(() => (isDarkMode.value ? darkTheme : null))
-  const leftSidebarWidth = ref(300)
-  const rightSidebarWidth = ref(300)
-  const timelineHeight = ref(200)
+  const leftSidebarWidth = ref(SIDEBAR_DEFAULT_WIDTH)
+  const rightSidebarWidth = ref(SIDEBAR_DEFAULT_WIDTH)
+  const timelineHeight = ref(TIMELINE_DEFAULT_HEIGHT)
   const leftSidebarTab = ref<'nodeTree' | 'presets'>('nodeTree')
   const settings = ref({
     exportFormat: 'css' as 'css' | 'html' | 'json',
-    defaultDuration: 3000,
+    defaultDuration: ANIMATION_UI_DEFAULT_DURATION,
     autoSave: true
   })
   const autoKeyframe = ref(false) // 自动K帧开关
@@ -31,17 +40,17 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function setLeftSidebarWidth(width: number) {
-    leftSidebarWidth.value = Math.max(200, Math.min(600, width))
+    leftSidebarWidth.value = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width))
     saveToLocalStorage()
   }
 
   function setRightSidebarWidth(width: number) {
-    rightSidebarWidth.value = Math.max(200, Math.min(600, width))
+    rightSidebarWidth.value = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width))
     saveToLocalStorage()
   }
 
   function setTimelineHeight(height: number) {
-    timelineHeight.value = Math.max(150, Math.min(400, height))
+    timelineHeight.value = Math.max(TIMELINE_MIN_HEIGHT, Math.min(TIMELINE_MAX_HEIGHT, height))
     saveToLocalStorage()
   }
 
