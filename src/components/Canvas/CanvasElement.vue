@@ -60,13 +60,6 @@ const emit = defineEmits<{
 const animationStore = useAnimationStore()
 const elementStore = useElementStore()
 
-const handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w']
-const isResizing = ref(false)
-const resizeHandle = ref<string | null>(null)
-const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
-const isDragging = ref(false)
-const dragStart = ref({ x: 0, y: 0, elementX: 0, elementY: 0 })
-
 // 获取元素的宽高（从 style 中读取）
 const elementWidth = computed(() => parseStyleValue(props.element.style.width, ELEMENT_DEFAULT_WIDTH))
 const elementHeight = computed(() => parseStyleValue(props.element.style.height, ELEMENT_DEFAULT_HEIGHT))
@@ -126,25 +119,29 @@ const elementStyle = computed(() => {
   // 确保宽高是字符串格式（如果是数字则添加 px）
   const widthStr = typeof width === 'number' ? `${width}px` : String(width)
   const heightStr = typeof height === 'number' ? `${height}px` : String(height)
-  
-  return {
+  const style = {
+    ...props.element.style,
     position: 'absolute' as const,
     left: `${props.element.position.x}px`,
     top: `${props.element.position.y}px`,
     width: widthStr,
     height: heightStr,
-    ...props.element.style,
-    ...animationStyle.value
   }
+  return style
 })
 
 function handleClick(e: MouseEvent) {
   emit('select', props.element.id, e.ctrlKey || e.metaKey)
 }
 
+//#region 拖拽逻辑
+const isDragging = ref(false)
+const dragStart = ref({ x: 0, y: 0, elementX: 0, elementY: 0 })
+
 function handleMouseDown(e: MouseEvent) {
   // 如果点击的是调整大小的手柄，不触发拖拽
-  if ((e.target as HTMLElement).classList.contains('element-handle')) {
+  console.log("🚀 ~ isResizing.value:", isResizing.value)
+  if (isResizing.value) {
     return
   }
 
@@ -152,9 +149,6 @@ function handleMouseDown(e: MouseEvent) {
 
   // 开始拖拽
   isDragging.value = true
-  const canvasElement = (e.target as HTMLElement).closest('.canvas') as HTMLElement
-  if (!canvasElement) return
-
   // 先保存拖拽开始时的状态
   dragStart.value = {
     x: e.clientX,
@@ -169,7 +163,7 @@ function handleMouseDown(e: MouseEvent) {
 }
 
 function handleDrag(e: MouseEvent) {
-  if (!isDragging.value) return
+  if (!isDragging.value || isResizing.value) return
 
   const canvasElement = document.querySelector('.canvas') as HTMLElement
   if (!canvasElement) return
@@ -214,11 +208,19 @@ function stopDrag() {
     document.removeEventListener('mouseup', stopDrag)
   }
 }
+//#endregion
+
+//#region 调整大小逻辑
+const handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w']
+const isResizing = ref(false)
+const resizeHandle = ref<string | null>(null)
+const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
 
 function startResize(handle: string, e: MouseEvent) {
   e.stopPropagation()
   isResizing.value = true
   resizeHandle.value = handle
+  console.log("🚀 ~ handle:", handle)
   resizeStart.value = {
     x: e.clientX,
     y: e.clientY,
@@ -247,8 +249,8 @@ function handleResize(e: MouseEvent) {
     }
   }
 
-  const deltaX = (e.clientX - resizeStart.value.x) / zoom
-  const deltaY = (e.clientY - resizeStart.value.y) / zoom
+  const deltaX = (e.clientX - resizeStart.value.x)
+  const deltaY = (e.clientY - resizeStart.value.y)
 
   const updates: Partial<CanvasElementType> = {
     style: { ...props.element.style }
@@ -269,8 +271,11 @@ function handleResize(e: MouseEvent) {
   }
   if (resizeHandle.value.includes('n')) {
     const newHeight = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.height - deltaY)
+    console.log("🚀 ~ newHeight:", newHeight)
+    console.log("🚀 ~ deltaY:", deltaY)
     updates.style!.height = `${newHeight}px`
     updates.position = { ...props.element.position, y: props.element.position.y + deltaY }
+    console.log("🚀 ~ updates.position:", updates.position)
   }
 
   emit('update', props.element.id, updates)
@@ -282,6 +287,7 @@ function stopResize() {
   document.removeEventListener('mousemove', handleResize)
   document.removeEventListener('mouseup', stopResize)
 }
+//#endregion
 </script>
 
 <style lang="scss" scoped>

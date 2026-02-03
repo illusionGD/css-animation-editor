@@ -4,22 +4,22 @@
     class="canvas-container"
   >
     <div class="canvas-ruler-wrapper">
-      <CanvasRuler
+      <!-- <CanvasRuler
         v-if="canvasConfig.showRuler"
         type="horizontal"
         :zoom="canvasConfig.zoom"
         :offset-x="canvasConfig.offsetX"
         :offset-y="canvasConfig.offsetY"
-      />
+      /> -->
     </div>
     <div class="canvas-content-wrapper">
-      <CanvasRuler
+      <!-- <CanvasRuler
         v-if="canvasConfig.showRuler"
         type="vertical"
         :zoom="canvasConfig.zoom"
         :offset-x="canvasConfig.offsetX"
         :offset-y="canvasConfig.offsetY"
-      />
+      /> -->
       <div
         class="canvas-wrapper"
         @wheel="handleWheel"
@@ -55,10 +55,10 @@
             @select="handleElementSelect"
             @update="handleElementUpdate"
           />
-          <SelectionBox
+          <!-- <SelectionBox
             v-if="selectionBox"
             :box="selectionBox"
-          />
+          /> -->
         </div>
       </div>
     </div>
@@ -68,18 +68,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useCanvasStore } from '@/stores/canvasStore'
-import { useUIStore } from '@/stores/uiStore'
 import { useAnimationStore } from '@/stores/animationStore'
 import { clamp } from '@/utils/calculators'
 import { CANVAS_DEFAULT_OFFSET_X, CANVAS_DEFAULT_OFFSET_Y } from '@/constants'
-import CanvasRuler from './CanvasRuler.vue'
 import CanvasGrid from './CanvasGrid.vue'
 import CanvasElement from './CanvasElement.vue'
-import SelectionBox from './SelectionBox.vue'
 import type { CanvasElement as CanvasElementType } from '@/types'
+import { useGlobalStore } from '@/stores/globalStore'
 
 const canvasStore = useCanvasStore()
-const uiStore = useUIStore()
+const globalStore = useGlobalStore()
 const animationStore = useAnimationStore()
 
 const containerRef = ref<HTMLElement>()
@@ -94,7 +92,7 @@ const canvasConfig = computed(() => canvasStore.canvasConfig)
 const elements = computed(() => canvasStore.elements)
 const isDark = computed(() => {
   // 通过检查theme是否为null来判断是否为暗色主题
-  return uiStore.theme !== null
+  return globalStore.themeSettings.isDarkMode
 })
 
 const canvasStyle = computed(() => ({

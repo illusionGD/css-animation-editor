@@ -1,7 +1,7 @@
 <template>
   <n-layout-header
     class="header"
-    :class="{ 'dark-theme': isDark }"
+    :class="{ 'dark-theme': globalStore.themeSettings.isDarkMode }"
     bordered
   >
     <div class="header-content">
@@ -42,24 +42,24 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { NLayoutHeader, NButton, NSpace, NIcon } from 'naive-ui'
-import { useUIStore } from '@/stores/uiStore'
-import SettingsModal from './SettingsModal.vue'
+import { useGlobalStore } from '@/stores/globalStore'
+import SettingsModal from './SettingsModal/index.vue'
 import { SunnyOutline, MoonOutline, SettingsOutline } from '@vicons/ionicons5'
 
 const SunIcon = SunnyOutline
 const MoonIcon = MoonOutline
 const SettingsIcon = SettingsOutline
 
-const uiStore = useUIStore()
+const globalStore = useGlobalStore()
 const showSettings = ref(false)
 
 const isDark = computed(() => {
-  // 通过检查theme是否为null来判断是否为暗色主题
-  return uiStore.theme !== null
+  // 通过 globalStore 的主题设置判断
+  return globalStore.themeSettings.isDarkMode
 })
 
 function toggleTheme() {
-  uiStore.toggleTheme()
+  globalStore.toggleTheme()
 }
 </script>
 

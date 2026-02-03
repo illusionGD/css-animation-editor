@@ -1,5 +1,5 @@
 <template>
-  <n-config-provider :theme="uiStore.theme">
+  <n-config-provider :theme="globalStore.themeSettings.theme">
     <n-message-provider>
       <n-dialog-provider>
         <div
@@ -32,7 +32,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { NConfigProvider, NLayout, NMessageProvider, NDialogProvider } from 'naive-ui'
-import { useUIStore } from '@/stores/uiStore'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 import Header from '@/components/Header/Header.vue'
 import ResizableLayout from '@/components/ResizableLayout/ResizableLayout.vue'
@@ -40,9 +39,10 @@ import LeftSidebar from '@/components/LeftSidebar/LeftSidebar.vue'
 import Canvas from '@/components/Canvas/Canvas.vue'
 import PropertyPanel from '@/components/PropertyPanel/PropertyPanel.vue'
 import Timeline from '@/components/Timeline/Timeline.vue'
+import { useGlobalStore } from './stores/globalStore'
 
-const uiStore = useUIStore()
-const isDark = computed(() => uiStore.theme !== null)
+const globalStore = useGlobalStore()
+const isDark = computed(() => globalStore.themeSettings.isDarkMode)
 useKeyboardShortcuts()
 </script>
 

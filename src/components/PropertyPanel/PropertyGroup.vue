@@ -1,26 +1,17 @@
 <template>
-  <n-collapse>
-    <n-collapse-item
-      :title="title"
-      :name="title"
-      default-expanded
-    >
-      <div class="property-list">
-        <PropertyInput
-          v-for="propertyConfig in properties"
-          :key="propertyConfig.name"
-          :property="propertyConfig.name"
-          :config="propertyConfig"
-          :value="propertyValues[propertyConfig.name] ?? ''"
-          @update="handleUpdate"
-        />
-      </div>
-    </n-collapse-item>
-  </n-collapse>
+  <div class="property-list">
+    <PropertyInput
+      v-for="propertyConfig in properties"
+      :key="propertyConfig.name"
+      :property="propertyConfig.name"
+      :config="propertyConfig"
+      :value="propertyValues[propertyConfig.name] ?? ''"
+      @update="handleUpdate"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { NCollapse, NCollapseItem } from 'naive-ui'
 import type { AnimatableProperty } from './animatableProperties'
 import PropertyInput from './PropertyInput.vue'
 
@@ -46,7 +37,10 @@ function handleUpdate(property: string, value: any) {
 .property-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 8px 0;
+  gap: 10px;
+  padding: 5px 0;
+  h4 {
+    color: var(--n-text-color);
+  }
 }
 </style>

@@ -1,9 +1,6 @@
 <template>
   <div class="resizable-layout">
-    <div
-      class="layout-container"
-      :style="containerStyle"
-    >
+    <div class="layout-container" :style="containerStyle">
       <!-- 左侧边栏 -->
       <div
         v-if="showLeft"
@@ -12,18 +9,11 @@
         :style="{ width: `${leftWidth}px` }"
       >
         <slot name="left" />
-        <div
-          class="resize-handle left-handle"
-          @mousedown="startResize('left', $event)"
-        />
+        <div class="resize-handle left-handle" @mousedown="startResize('left', $event)" />
       </div>
 
       <!-- 中间内容区 -->
-      <div
-        class="main-content"
-        :class="{ 'dark-theme': isDark }"
-        :style="mainContentStyle"
-      >
+      <div class="main-content" :class="{ 'dark-theme': isDark }" :style="mainContentStyle">
         <slot name="main" />
       </div>
 
@@ -34,10 +24,7 @@
         :class="{ 'dark-theme': isDark }"
         :style="{ width: `${rightWidth}px` }"
       >
-        <div
-          class="resize-handle right-handle"
-          @mousedown="startResize('right', $event)"
-        />
+        <div class="resize-handle right-handle" @mousedown="startResize('right', $event)" />
         <slot name="right" />
       </div>
     </div>
@@ -49,21 +36,18 @@
       :class="{ 'dark-theme': isDark }"
       :style="{ height: `${bottomHeight}px` }"
     >
-      <div
-        class="resize-handle top-handle"
-        @mousedown="startResize('bottom', $event)"
-      />
+      <div class="resize-handle top-handle" @mousedown="startResize('bottom', $event)" />
       <slot name="bottom" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useUIStore } from '@/stores/uiStore'
+import { computed, onUnmounted } from 'vue'
+import { useGlobalStore } from '@/stores/globalStore'
 
-const uiStore = useUIStore()
-const isDark = computed(() => uiStore.theme !== null)
+const globalStore = useGlobalStore()
+const isDark = computed(() => globalStore.themeSettings.isDarkMode)
 
 interface Props {
   showLeft?: boolean
@@ -78,18 +62,18 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const leftWidth = computed({
-  get: () => uiStore.leftSidebarWidth,
-  set: val => uiStore.setLeftSidebarWidth(val)
+  get: () => globalStore.layoutSettings.leftSidebarWidth,
+  set: val => globalStore.setLayoutSettings({ leftSidebarWidth: val })
 })
 
 const rightWidth = computed({
-  get: () => uiStore.rightSidebarWidth,
-  set: val => uiStore.setRightSidebarWidth(val)
+  get: () => globalStore.layoutSettings.rightSidebarWidth,
+  set: val => globalStore.setLayoutSettings({ rightSidebarWidth: val })
 })
 
 const bottomHeight = computed({
-  get: () => uiStore.timelineHeight,
-  set: val => uiStore.setTimelineHeight(val)
+  get: () => globalStore.layoutSettings.timelineHeight,
+  set: val => globalStore.setLayoutSettings({ timelineHeight: val })
 })
 
 const containerStyle = computed(() => ({

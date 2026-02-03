@@ -12,8 +12,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useUIStore } from '@/stores/uiStore'
 import { CANVAS_DEFAULT_WIDTH, CANVAS_DEFAULT_HEIGHT } from '@/constants'
+import { useGlobalStore } from '@/stores/globalStore'
 
 interface Props {
   gridSize: number
@@ -25,10 +25,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const uiStore = useUIStore()
 const gridCanvas = ref<HTMLCanvasElement>()
 
-const isDark = computed(() => uiStore.theme !== null)
+const globalStore = useGlobalStore()
+
+const isDark = computed(() => globalStore.themeSettings.isDarkMode)
 
 const gridStyle = computed(() => ({
   position: 'absolute' as const,

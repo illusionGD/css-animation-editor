@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useUIStore } from '@/stores/uiStore'
+import { useGlobalStore } from '@/stores/globalStore'
 
 interface Props {
   type: 'horizontal' | 'vertical'
@@ -43,14 +43,14 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const uiStore = useUIStore()
+const globalStore = useGlobalStore()
 
 const rulerSize = 20
 const baseTickInterval = 50 // 基础刻度间隔
 const baseMajorTickInterval = 250 // 基础主刻度间隔
 const minScreenInterval = 30 // 最小屏幕像素间隔（避免刻度太密集）
 
-const isDark = computed(() => uiStore.theme !== null)
+const isDark = computed(() => globalStore.themeSettings.isDarkMode)
 
 // 根据缩放级别动态计算刻度间隔
 const tickInterval = computed(() => {
