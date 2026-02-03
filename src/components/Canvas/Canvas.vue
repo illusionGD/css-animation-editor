@@ -1,65 +1,40 @@
 <template>
-  <div
-    ref="containerRef"
-    class="canvas-container"
-  >
-    <div class="canvas-ruler-wrapper">
-      <!-- <CanvasRuler
-        v-if="canvasConfig.showRuler"
-        type="horizontal"
+  <div ref="containerRef" class="canvas-container">
+    <div class="canvas-wrapper" @wheel="handleWheel" @contextmenu.prevent>
+      <CanvasGrid
+        v-if="canvasConfig.showGrid"
+        :grid-size="canvasConfig.gridSize"
         :zoom="canvasConfig.zoom"
         :offset-x="canvasConfig.offsetX"
         :offset-y="canvasConfig.offsetY"
-      /> -->
-    </div>
-    <div class="canvas-content-wrapper">
-      <!-- <CanvasRuler
-        v-if="canvasConfig.showRuler"
-        type="vertical"
-        :zoom="canvasConfig.zoom"
-        :offset-x="canvasConfig.offsetX"
-        :offset-y="canvasConfig.offsetY"
-      /> -->
+        :canvas-width="canvasConfig.width"
+        :canvas-height="canvasConfig.height"
+      />
       <div
-        class="canvas-wrapper"
-        @wheel="handleWheel"
-        @contextmenu.prevent
+        class="canvas"
+        :style="canvasStyle"
+        @mousedown="handleCanvasMouseDown"
+        @mousemove="handleMouseMove"
+        @mouseup="handleMouseUp"
+        @click="handleClick"
       >
-        <CanvasGrid
-          v-if="canvasConfig.showGrid"
-          :grid-size="canvasConfig.gridSize"
-          :zoom="canvasConfig.zoom"
-          :offset-x="canvasConfig.offsetX"
-          :offset-y="canvasConfig.offsetY"
+        <CanvasElement
+          v-for="element in elements"
+          :key="element.id"
+          :element="element"
+          :selected="isSelected(element.id)"
+          :canvas-zoom="canvasConfig.zoom"
+          :canvas-offset-x="canvasConfig.offsetX"
+          :canvas-offset-y="canvasConfig.offsetY"
           :canvas-width="canvasConfig.width"
           :canvas-height="canvasConfig.height"
+          @select="handleElementSelect"
+          @update="handleElementUpdate"
         />
-        <div
-          class="canvas"
-          :style="canvasStyle"
-          @mousedown="handleCanvasMouseDown"
-          @mousemove="handleMouseMove"
-          @mouseup="handleMouseUp"
-          @click="handleClick"
-        >
-          <CanvasElement
-            v-for="element in elements"
-            :key="element.id"
-            :element="element"
-            :selected="isSelected(element.id)"
-            :canvas-zoom="canvasConfig.zoom"
-            :canvas-offset-x="canvasConfig.offsetX"
-            :canvas-offset-y="canvasConfig.offsetY"
-            :canvas-width="canvasConfig.width"
-            :canvas-height="canvasConfig.height"
-            @select="handleElementSelect"
-            @update="handleElementUpdate"
-          />
-          <!-- <SelectionBox
+        <!-- <SelectionBox
             v-if="selectionBox"
             :box="selectionBox"
           /> -->
-        </div>
       </div>
     </div>
   </div>

@@ -74,7 +74,6 @@ function drawGrid() {
   // 根据主题设置颜色
   const minorGridColor = isDark.value ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'
   const majorGridColor = isDark.value ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'
-  const originLineColor = isDark.value ? 'rgba(255, 100, 100, 0.4)' : 'rgba(255, 0, 0, 0.4)'
 
   // 网格大小应该与标尺的刻度间隔匹配
   // 标尺基础间隔是 50，主刻度间隔是 250
@@ -165,29 +164,6 @@ function drawGrid() {
       ctx.lineTo(width, y)
       ctx.stroke()
     }
-  }
-
-  // 绘制原点坐标轴（红色）
-  // 画布的(0,0)对应容器中的(offsetX, offsetY)位置
-  ctx.strokeStyle = originLineColor
-  ctx.lineWidth = 1.5
-
-  // 垂直原点线（X=0）- 画布的X=0对应容器中的offsetX位置
-  const originX = props.offsetX
-  if (originX >= 0 && originX <= width) {
-    ctx.beginPath()
-    ctx.moveTo(originX, 0)
-    ctx.lineTo(originX, height)
-    ctx.stroke()
-  }
-
-  // 水平原点线（Y=0）- 画布的Y=0对应容器中的offsetY位置
-  const originY = props.offsetY
-  if (originY >= 0 && originY <= height) {
-    ctx.beginPath()
-    ctx.moveTo(0, originY)
-    ctx.lineTo(width, originY)
-    ctx.stroke()
   }
 }
 

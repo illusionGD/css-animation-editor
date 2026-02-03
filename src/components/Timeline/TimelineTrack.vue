@@ -240,7 +240,7 @@ onUnmounted(() => {
 .keyframe-handle {
   width: 10px;
   height: 10px;
-  background: #18a058;
+  background: var(--color-primary);
   border: 2px solid #fff;
   transform: rotate(45deg);
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);

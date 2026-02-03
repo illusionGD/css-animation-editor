@@ -885,7 +885,7 @@ function getPropertyLabel(property: string): string {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #18a058;
+  background: var(--color-primary);
   pointer-events: auto;
   z-index: 20;
   box-shadow: 0 0 4px rgba(24, 160, 88, 0.5);
@@ -908,7 +908,7 @@ function getPropertyLabel(property: string): string {
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 8px solid #18a058;
+    border-top: 8px solid var(--color-primary);
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     cursor: grab;
   }

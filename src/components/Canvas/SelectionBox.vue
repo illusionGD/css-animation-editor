@@ -20,7 +20,7 @@ const boxStyle = computed(() => ({
   top: `${props.box.y}px`,
   width: `${props.box.width}px`,
   height: `${props.box.height}px`,
-  border: '1px dashed #18a058',
+  border: '1px dashed var(--color-primary)',
   background: 'rgba(24, 160, 88, 0.1)',
   pointerEvents: 'none'
 }))

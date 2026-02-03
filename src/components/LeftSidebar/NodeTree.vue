@@ -24,7 +24,6 @@
               <AddIcon />
             </n-icon>
           </template>
-          {{ hasSelectedElement ? '添加子元素' : '添加元素' }}
         </n-button>
       </div>
     </div>
@@ -413,11 +412,11 @@ function cancelRename() {
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding: 8px 0;
   overflow: hidden;
 }
 
 .node-tree-header {
-  padding: 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -430,7 +429,7 @@ function cancelRename() {
 .node-tree-content {
   flex: 1;
   overflow: hidden;
-  padding: 8px;
+  padding: 8px 0;
   display: flex;
   flex-direction: column;
   min-height: 0;

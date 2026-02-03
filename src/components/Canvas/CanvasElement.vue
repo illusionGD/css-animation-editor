@@ -9,10 +9,7 @@
     <div class="element-content">
       <slot>{{ element.type }}</slot>
     </div>
-    <div
-      v-if="selected"
-      class="element-handles"
-    >
+    <div v-if="selected" class="element-handles">
       <div
         v-for="handle in handles"
         :key="handle"
@@ -26,8 +23,6 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAnimationStore } from '@/stores/animationStore'
-import { useElementStore } from '@/stores/elementStore'
 import { interpolateKeyframes, parseStyleValue } from '@/utils/calculators'
 import {
   ELEMENT_DEFAULT_WIDTH,
@@ -57,65 +52,20 @@ const emit = defineEmits<{
   update: [elementId: string, updates: Partial<CanvasElementType>]
 }>()
 
-const animationStore = useAnimationStore()
-const elementStore = useElementStore()
 
 // 获取元素的宽高（从 style 中读取）
-const elementWidth = computed(() => parseStyleValue(props.element.style.width, ELEMENT_DEFAULT_WIDTH))
-const elementHeight = computed(() => parseStyleValue(props.element.style.height, ELEMENT_DEFAULT_HEIGHT))
-
-// 计算动画样式（根据当前播放时间应用）
-const animationStyle = computed(() => {
-  // 如果不在播放状态，不应用动画样式
-  if (!animationStore.isPlaying) {
-    return {}
-  }
-
-  const progress = animationStore.currentProgress
-  const style: Record<string, string | number> = {}
-
-  // 遍历当前元素的 tracks，计算当前时间点的属性值（从 elementStore 获取）
-  const elementTracks = elementStore.getElementTracks(props.element.id)
-  let transformStr = ''
-  elementTracks.forEach(track => {
-    if (track.keyframes.length > 0) {
-      const value = interpolateKeyframes(track.keyframes, progress)
-      if (value !== undefined) {
-        // 根据属性类型设置样式
-        if (
-          ['translateX', 'translateY', 'scaleX', 'scaleY', 'rotate', 'skewX', 'skewY'].includes(
-            track.property
-          )
-        ) {
-          // Transform 属性需要组合
-          const unit =
-            track.property === 'rotate' || track.property === 'skewX' || track.property === 'skewY'
-              ? 'deg'
-              : track.property === 'scaleX' || track.property === 'scaleY'
-                ? ''
-                : 'px'
-          transformStr += `${track.property}(${value}${unit}) `
-        } else {
-          // 其他属性直接设置
-          style[track.property] = typeof value === 'number' ? `${value}px` : String(value)
-        }
-      }
-    }
-  })
-
-  // 设置 transform
-  if (transformStr) {
-    style.transform = transformStr.trim()
-  }
-
-  return style
-})
+const elementWidth = computed(() =>
+  parseStyleValue(props.element.style.width, ELEMENT_DEFAULT_WIDTH)
+)
+const elementHeight = computed(() =>
+  parseStyleValue(props.element.style.height, ELEMENT_DEFAULT_HEIGHT)
+)
 
 const elementStyle = computed(() => {
   // 从 style 中获取宽高，如果没有则使用默认值
   const width = props.element.style.width || ELEMENT_DEFAULT_WIDTH_PX
   const height = props.element.style.height || ELEMENT_DEFAULT_HEIGHT_PX
-  
+
   // 确保宽高是字符串格式（如果是数字则添加 px）
   const widthStr = typeof width === 'number' ? `${width}px` : String(width)
   const heightStr = typeof height === 'number' ? `${height}px` : String(height)
@@ -125,7 +75,7 @@ const elementStyle = computed(() => {
     left: `${props.element.position.x}px`,
     top: `${props.element.position.y}px`,
     width: widthStr,
-    height: heightStr,
+    height: heightStr
   }
   return style
 })
@@ -140,7 +90,6 @@ const dragStart = ref({ x: 0, y: 0, elementX: 0, elementY: 0 })
 
 function handleMouseDown(e: MouseEvent) {
   // 如果点击的是调整大小的手柄，不触发拖拽
-  console.log("🚀 ~ isResizing.value:", isResizing.value)
   if (isResizing.value) {
     return
   }
@@ -214,18 +163,19 @@ function stopDrag() {
 const handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w']
 const isResizing = ref(false)
 const resizeHandle = ref<string | null>(null)
-const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
+const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0, elementX: 0, elementY: 0 })
 
 function startResize(handle: string, e: MouseEvent) {
   e.stopPropagation()
   isResizing.value = true
   resizeHandle.value = handle
-  console.log("🚀 ~ handle:", handle)
   resizeStart.value = {
     x: e.clientX,
     y: e.clientY,
     width: elementWidth.value,
-    height: elementHeight.value
+    height: elementHeight.value,
+    elementX: props.element.position.x,
+    elementY: props.element.position.y
   }
 
   document.addEventListener('mousemove', handleResize)
@@ -235,47 +185,47 @@ function startResize(handle: string, e: MouseEvent) {
 function handleResize(e: MouseEvent) {
   if (!isResizing.value || !resizeHandle.value) return
 
-  // 获取canvas的缩放比例
-  const canvasElement = (e.target as HTMLElement).closest('.canvas') as HTMLElement
-  let zoom = 1
-  if (canvasElement) {
-    const transform = getComputedStyle(canvasElement).transform
-    if (transform && transform !== 'none') {
-      const matrix = transform.match(/matrix\(([^)]+)\)/)
-      if (matrix) {
-        const values = matrix[1].split(',').map(parseFloat)
-        zoom = values[0] || 1
-      }
-    }
-  }
+  // 使用传入的画布缩放比例（与拖拽逻辑保持一致）
+  const zoom = props.canvasZoom || 1
 
-  const deltaX = (e.clientX - resizeStart.value.x)
-  const deltaY = (e.clientY - resizeStart.value.y)
+  const deltaX = (e.clientX - resizeStart.value.x) / zoom
+  const deltaY = (e.clientY - resizeStart.value.y) / zoom
 
   const updates: Partial<CanvasElementType> = {
     style: { ...props.element.style }
+  }
+
+  const newPosition = {
+    x: resizeStart.value.elementX,
+    y: resizeStart.value.elementY
   }
 
   if (resizeHandle.value.includes('e')) {
     const newWidth = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.width + deltaX)
     updates.style!.width = `${newWidth}px`
   }
+
   if (resizeHandle.value.includes('w')) {
     const newWidth = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.width - deltaX)
+    const actualDeltaX = resizeStart.value.width - newWidth
     updates.style!.width = `${newWidth}px`
-    updates.position = { ...props.element.position, x: props.element.position.x + deltaX }
+    newPosition.x = resizeStart.value.elementX + actualDeltaX
   }
+
   if (resizeHandle.value.includes('s')) {
     const newHeight = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.height + deltaY)
     updates.style!.height = `${newHeight}px`
   }
+
   if (resizeHandle.value.includes('n')) {
     const newHeight = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.height - deltaY)
-    console.log("🚀 ~ newHeight:", newHeight)
-    console.log("🚀 ~ deltaY:", deltaY)
+    const actualDeltaY = resizeStart.value.height - newHeight
     updates.style!.height = `${newHeight}px`
-    updates.position = { ...props.element.position, y: props.element.position.y + deltaY }
-    console.log("🚀 ~ updates.position:", updates.position)
+    newPosition.y = resizeStart.value.elementY + actualDeltaY
+  }
+
+  if (resizeHandle.value.includes('w') || resizeHandle.value.includes('n')) {
+    updates.position = newPosition
   }
 
   emit('update', props.element.id, updates)
@@ -297,19 +247,22 @@ function stopResize() {
   cursor: move;
 
   &.selected {
-    border-color: #18a058;
-    box-shadow: 0 0 0 1px #18a058;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
   }
 }
-
+.selected {
+  .element-content {
+    background: rgba(24, 160, 88, 0.1);
+    border: 1px dashed var(--color-primary);
+  }
+}
 .element-content {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(24, 160, 88, 0.1);
-  border: 1px dashed #18a058;
 }
 
 .element-handles {
@@ -325,7 +278,7 @@ function stopResize() {
   position: absolute;
   width: 8px;
   height: 8px;
-  background: #18a058;
+  background: var(--color-primary);
   border: 1px solid #fff;
   pointer-events: all;
   cursor: nwse-resize;

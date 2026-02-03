@@ -27,7 +27,7 @@
             >
               <path
                 d="M6 0L11.1962 3V9L6 12L0.803848 9V3L6 0Z"
-                :fill="hasKeyframeAtCurrentTime(track) ? '#18a058' : 'currentColor'"
+                :fill="hasKeyframeAtCurrentTime(track) ? 'var(--color-primary)' : 'currentColor'"
               />
             </svg>
           </button>
@@ -215,7 +215,7 @@ function removeChannel(property: string) {
   }
 
   &.active {
-    color: #18a058;
+    color: var(--color-primary);
   }
 
   svg {
