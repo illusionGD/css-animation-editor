@@ -62,8 +62,10 @@
               <template #trigger>
                 <n-button
                   size="small"
-                  :type="uiStore.autoKeyframe ? 'primary' : 'default'"
-                  @click="uiStore.toggleAutoKeyframe"
+                  :type="globalStore.exportSettings.autoSave ? 'primary' : 'default'"
+                  @click="(e) => globalStore.setExportSettings({
+                    autoSave: !globalStore.exportSettings.autoSave
+                  })"
                 >
                   <template #icon>
                     <n-icon><FlashIcon /></n-icon>
@@ -217,7 +219,6 @@ import { NButton, NInputNumber, NEmpty, NIcon, NModal, NSelect, NInput, NTooltip
 import { Add, Refresh, Flash } from '@vicons/ionicons5'
 import { useAnimationStore } from '@/stores/animationStore'
 import { useCanvasStore } from '@/stores/canvasStore'
-import { useUIStore } from '@/stores/uiStore'
 import TimelineTrack from './TimelineTrack.vue'
 import TimelineGrid from './TimelineGrid.vue'
 import TimelineRuler from './TimelineRuler.vue'
@@ -232,10 +233,11 @@ import {
   TIMELINE_MAJOR_INTERVAL_MULTIPLIER
 } from './constants'
 import type { AnimationTrack } from '@/types'
+import { useGlobalStore } from '@/stores/globalStore'
 
 const animationStore = useAnimationStore()
 const canvasStore = useCanvasStore()
-const uiStore = useUIStore()
+const globalStore = useGlobalStore()
 
 const AddIcon = Add
 const RefreshIcon = Refresh

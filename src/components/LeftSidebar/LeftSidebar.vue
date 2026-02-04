@@ -12,17 +12,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { NTabs, NTabPane } from 'naive-ui'
-import { useUIStore } from '@/stores/uiStore'
 import NodeTree from './NodeTree.vue'
 import PresetPanel from './PresetPanel.vue'
 
-const uiStore = useUIStore()
-const activeTab = computed({
-  get: () => uiStore.leftSidebarTab,
-  set: val => uiStore.setLeftSidebarTab(val)
-})
+const activeTab = ref('nodeTree')
 </script>
 
 <style lang="scss" scoped>
