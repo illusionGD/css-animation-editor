@@ -1,5 +1,4 @@
 import { onMounted, onUnmounted } from 'vue'
-import { useCanvasStore } from '@/stores/canvasStore'
 import { useAnimationStore } from '@/stores/animationStore'
 
 type ShortcutHandler = (e: KeyboardEvent) => void
@@ -15,7 +14,6 @@ interface Shortcut {
 const shortcuts: Shortcut[] = []
 
 export function useKeyboardShortcuts() {
-  const canvasStore = useCanvasStore()
   const animationStore = useAnimationStore()
 
   function handleKeyDown(e: KeyboardEvent) {

@@ -7,7 +7,7 @@
     @click.stop="handleClick"
   >
     <div class="element-content">
-      <slot>{{ element.type }}</slot>
+      <slot></slot>
     </div>
     <div v-if="selected" class="element-handles">
       <div

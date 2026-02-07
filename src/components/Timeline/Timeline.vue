@@ -8,10 +8,7 @@
           <div class="playback-controls">
             <n-tooltip trigger="hover">
               <template #trigger>
-                <n-button
-                  size="small"
-                  @click="togglePlay"
-                >
+                <n-button size="small" @click="togglePlay">
                   {{ isPlaying ? '⏸' : '▶' }}
                 </n-button>
               </template>
@@ -19,10 +16,7 @@
             </n-tooltip>
             <n-tooltip trigger="hover">
               <template #trigger>
-                <n-button
-                  size="small"
-                  @click="stop"
-                >
+                <n-button size="small" @click="stop">
                   <template #icon>
                     <n-icon><RefreshIcon /></n-icon>
                   </template>
@@ -32,11 +26,7 @@
             </n-tooltip>
             <n-tooltip trigger="hover">
               <template #trigger>
-                <n-button
-                  size="small"
-                  type="primary"
-                  @click="showAddChannelDialog = true"
-                >
+                <n-button size="small" type="primary" @click="showAddChannelDialog = true">
                   <template #icon>
                     <n-icon><AddIcon /></n-icon>
                   </template>
@@ -63,9 +53,12 @@
                 <n-button
                   size="small"
                   :type="globalStore.exportSettings.autoSave ? 'primary' : 'default'"
-                  @click="(e) => globalStore.setExportSettings({
-                    autoSave: !globalStore.exportSettings.autoSave
-                  })"
+                  @click="
+                    e =>
+                      globalStore.setExportSettings({
+                        autoSave: !globalStore.exportSettings.autoSave
+                      })
+                  "
                 >
                   <template #icon>
                     <n-icon><FlashIcon /></n-icon>
@@ -85,18 +78,12 @@
           @add-keyframe="handleAddKeyframeFromChannel"
         />
       </div>
-      
+
       <div class="timeline-right">
         <!-- 时间轴标尺（与左侧顶部高度对齐） -->
-        <div
-          class="timeline-ruler-wrapper"
-          @click="handleRulerClick"
-        >
+        <div class="timeline-ruler-wrapper" @click="handleRulerClick">
           <div class="timeline-ruler-box">
-            <TimelineRuler
-              :duration="duration"
-              :zoom="zoom"
-            />
+            <TimelineRuler :duration="duration" :zoom="zoom" />
           </div>
           <!-- 时间刻度格子 -->
           <div class="timeline-time-grid">
@@ -114,7 +101,7 @@
           <div
             class="timeline-playhead timeline-playhead-ruler"
             :style="{ left: `${(currentTime / duration) * 100}%` }"
-            @mousedown.stop="startPlayheadDrag($event, 'ruler')"
+            @mousedown.stop="startPlayHeadDrag($event, 'ruler')"
           />
         </div>
         <!-- 时间刻度网格 -->
@@ -124,11 +111,7 @@
           @wheel="handleWheel"
           @click="handleTracksClick"
         >
-          <TimelineGrid
-            :duration="duration"
-            :zoom="zoom"
-            :width="contentWidth"
-          />
+          <TimelineGrid :duration="duration" :zoom="zoom" :width="contentWidth" />
           <div class="timeline-tracks">
             <TimelineTrack
               v-for="track in tracks"
@@ -154,7 +137,7 @@
           <div
             class="timeline-playhead timeline-playhead-grid"
             :style="{ left: `${(currentTime / duration) * 100}%` }"
-            @mousedown.stop="startPlayheadDrag($event, 'grid')"
+            @mousedown.stop="startPlayHeadDrag($event, 'grid')"
           />
         </div>
       </div>
@@ -172,6 +155,8 @@
         :options="availableProperties"
         placeholder="选择CSS属性"
         filterable
+        label-field="label"
+        value-field="value"
       />
     </n-modal>
     <!-- 关键帧值编辑对话框 -->
@@ -183,16 +168,12 @@
       negative-text="取消"
       @positive-click="handleSaveKeyframeValue"
     >
-      <div
-        v-if="editingKeyframe"
-        class="keyframe-edit-form"
-      >
+      <div v-if="editingKeyframe" class="keyframe-edit-form">
         <div class="form-item">
           <label>属性：</label>
-          <span>{{ getPropertyLabel(editingKeyframe.property) }}</span>
+          <span>{{ editingKeyframe.property }}</span>
         </div>
         <div class="form-item">
-          <label>值：</label>
           <n-input-number
             v-if="typeof editingKeyframe.value === 'number'"
             v-model:value="editingKeyframe.value"
@@ -215,10 +196,19 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, onMounted, watch, nextTick } from 'vue'
-import { NButton, NInputNumber, NEmpty, NIcon, NModal, NSelect, NInput, NTooltip } from 'naive-ui'
+import {
+  NButton,
+  NInputNumber,
+  NEmpty,
+  NIcon,
+  NModal,
+  NSelect,
+  NInput,
+  NTooltip,
+  useMessage
+} from 'naive-ui'
 import { Add, Refresh, Flash } from '@vicons/ionicons5'
 import { useAnimationStore } from '@/stores/animationStore'
-import { useCanvasStore } from '@/stores/canvasStore'
 import TimelineTrack from './TimelineTrack.vue'
 import TimelineGrid from './TimelineGrid.vue'
 import TimelineRuler from './TimelineRuler.vue'
@@ -234,9 +224,11 @@ import {
 } from './constants'
 import type { AnimationTrack } from '@/types'
 import { useGlobalStore } from '@/stores/globalStore'
+import { useElementStore } from '@/stores/elementStore'
+import { getCSSPropertyByProps, SUPPORTED_CSS_PROPERTIES } from '@/constants/element'
 
 const animationStore = useAnimationStore()
-const canvasStore = useCanvasStore()
+const elementStore = useElementStore()
 const globalStore = useGlobalStore()
 
 const AddIcon = Add
@@ -293,55 +285,13 @@ const timeGridTicks = computed(() => {
 
   return ticks
 })
+//#endregion
 
+//#region 初始化和清理
 // 更新内容宽度
 function updateContentWidth() {
   if (tracksWrapperRef.value) {
     contentWidth.value = tracksWrapperRef.value.clientWidth
-  }
-}
-
-function handleWheel(e: WheelEvent) {
-  // 滚轮缩放时间轴（不需要按Ctrl/Cmd）
-  e.preventDefault()
-  const delta = e.deltaY > 0 ? 0.9 : 1.1
-  const newZoom = zoom.value * delta
-  // 限制缩放范围，确保最小间隔不会小于 100ms (0.1s)
-  // TIMELINE_BASE_INTERVAL / zoom 应该 >= 100，所以 zoom <= TIMELINE_BASE_INTERVAL / 100 = 1
-  // 最大缩放：确保最小间隔不会太小，这里限制最大 zoom 为 10
-  zoom.value = Math.max(0.1, Math.min(10, newZoom))
-  updateContentWidth()
-  // 缩放后，自动将播放头对齐到最近的0.1s刻度
-  alignPlayheadToNearestTick()
-}
-
-// 将播放头对齐到最近的0.1s刻度
-function alignPlayheadToNearestTick() {
-  const PLAYHEAD_ALIGN_INTERVAL = 100 // 0.1s
-  const currentTimeValue = currentTime.value
-  const alignedTime = Math.round(currentTimeValue / PLAYHEAD_ALIGN_INTERVAL) * PLAYHEAD_ALIGN_INTERVAL
-  animationStore.seek(Math.max(0, Math.min(duration.value, alignedTime)))
-}
-
-// 处理 Delete 键删除选中的关键帧
-function handleKeyDown(e: KeyboardEvent) {
-  // 如果焦点在输入框等元素上，不处理
-  if (
-    e.target instanceof HTMLInputElement ||
-    e.target instanceof HTMLTextAreaElement ||
-    (e.target as HTMLElement).isContentEditable
-  ) {
-    return
-  }
-
-  // Delete 或 Backspace 键删除选中的关键帧
-  // 如果有关键帧被选中，优先删除关键帧，并阻止事件传播到全局处理（避免删除元素）
-  if ((e.key === 'Delete' || e.key === 'Backspace') && animationStore.selectedKeyframe) {
-    e.preventDefault()
-    e.stopPropagation() // 阻止事件传播，避免触发全局的删除元素功能
-    const { property, keyframeIndex } = animationStore.selectedKeyframe
-    handleRemoveKeyframe(property, keyframeIndex)
-    return
   }
 }
 
@@ -381,9 +331,169 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateContentWidth)
   window.removeEventListener('keydown', handleKeyDown)
   stopAnimation()
-  stopPlayheadDrag()
+  stopPlayHeadDrag()
 })
+//#endregion
 
+//#region 时间轴交互（缩放、吸附、网格）
+function handleWheel(e: WheelEvent) {
+  // 滚轮缩放时间轴（不需要按Ctrl/Cmd）
+  e.preventDefault()
+  const delta = e.deltaY > 0 ? 0.9 : 1.1
+  const newZoom = zoom.value * delta
+  // 限制缩放范围，确保最小间隔不会小于 100ms (0.1s)
+  // TIMELINE_BASE_INTERVAL / zoom 应该 >= 100，所以 zoom <= TIMELINE_BASE_INTERVAL / 100 = 1
+  // 最大缩放：确保最小间隔不会太小，这里限制最大 zoom 为 10
+  zoom.value = Math.max(0.1, Math.min(10, newZoom))
+  updateContentWidth()
+  // 缩放后，自动将播放头对齐到最近的0.1s刻度
+  alignPlayHeadToNearestTick()
+}
+
+// 将播放头对齐到最近的0.1s刻度
+function alignPlayHeadToNearestTick() {
+  const PLAY_HEAD_ALIGN_INTERVAL = 100 // 0.1s
+  const currentTimeValue = currentTime.value
+  const alignedTime =
+    Math.round(currentTimeValue / PLAY_HEAD_ALIGN_INTERVAL) * PLAY_HEAD_ALIGN_INTERVAL
+  animationStore.seek(Math.max(0, Math.min(duration.value, alignedTime)))
+}
+
+// 点击时间轴跳转
+function handleRulerClick(e: MouseEvent) {
+  // 如果点击的是播放头，不处理（由拖拽处理）
+  if ((e.target as HTMLElement).closest('.timeline-playhead')) {
+    return
+  }
+
+  const container = e.currentTarget as HTMLElement
+  const rect = container.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const clampedX = Math.max(0, Math.min(rect.width, x))
+  let newTime = (clampedX / rect.width) * duration.value
+
+  // 点击跳转时，如果启用吸附，对齐到网格；否则对齐到0.1s
+  if (snapEnabled.value && snapInterval.value) {
+    newTime = Math.round(newTime / snapInterval.value) * snapInterval.value
+  } else {
+    // 未启用吸附时，也按照0.1s对齐
+    const PLAYHEAD_CLICK_INTERVAL = 100 // 0.1s
+    newTime = Math.round(newTime / PLAYHEAD_CLICK_INTERVAL) * PLAYHEAD_CLICK_INTERVAL
+  }
+
+  animationStore.seek(Math.max(0, Math.min(duration.value, newTime)))
+}
+
+function handleTracksClick(e: MouseEvent) {
+  // 如果点击的是关键帧或播放头，不处理
+  if (
+    (e.target as HTMLElement).closest('.keyframe') ||
+    (e.target as HTMLElement).closest('.timeline-playhead')
+  ) {
+    return
+  }
+
+  if (!tracksWrapperRef.value) return
+
+  const rect = tracksWrapperRef.value.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const clampedX = Math.max(0, Math.min(rect.width, x))
+  let newTime = (clampedX / rect.width) * duration.value
+
+  // 点击跳转时，如果启用吸附，对齐到网格；否则对齐到0.1s
+  if (snapEnabled.value && snapInterval.value) {
+    newTime = Math.round(newTime / snapInterval.value) * snapInterval.value
+  } else {
+    // 未启用吸附时，也按照0.1s对齐
+    const PLAYHEAD_CLICK_INTERVAL = 100 // 0.1s
+    newTime = Math.round(newTime / PLAYHEAD_CLICK_INTERVAL) * PLAYHEAD_CLICK_INTERVAL
+  }
+
+  animationStore.seek(Math.max(0, Math.min(duration.value, newTime)))
+}
+//#endregion
+
+//#region 播放头拖拽
+let isPlayHeadDragging = false
+let playHeadDragContainer: HTMLElement | null = null
+let dragStartX = 0
+let dragStartTime = 0
+
+function startPlayHeadDrag(e: MouseEvent, type: 'ruler' | 'grid') {
+  e.stopPropagation()
+  e.preventDefault()
+
+  isPlayHeadDragging = true
+  dragStartX = e.clientX
+  dragStartTime = currentTime.value
+
+  // 根据类型选择容器
+  if (type === 'ruler') {
+    const rulerWrapper = (e.currentTarget as HTMLElement).closest(
+      '.timeline-ruler-wrapper'
+    ) as HTMLElement | null
+    playHeadDragContainer = rulerWrapper
+  } else {
+    playHeadDragContainer = tracksWrapperRef.value ?? null
+  }
+
+  if (playHeadDragContainer) {
+    // 添加拖拽中的样式类
+    playHeadDragContainer.classList.add('playhead-dragging')
+  }
+
+  document.addEventListener('mousemove', handlePlayHeadDrag)
+  document.addEventListener('mouseup', stopPlayHeadDrag)
+}
+
+function handlePlayHeadDrag(e: MouseEvent) {
+  if (!isPlayHeadDragging || !playHeadDragContainer) return
+  updatePlayHeadTime(e)
+}
+
+function updatePlayHeadTime(e: MouseEvent) {
+  if (!playHeadDragContainer) return
+
+  const rect = playHeadDragContainer.getBoundingClientRect()
+  const pixelWidth = rect.width
+
+  // 计算鼠标移动的像素距离
+  const deltaX = e.clientX - dragStartX
+
+  // 根据当前缩放级别，计算每个像素对应的时间（毫秒）
+  // 总时长 / 像素宽度 = 每像素对应的时间
+  const timePerPixel = duration.value / pixelWidth
+
+  // 计算移动的时间距离
+  const timeDelta = deltaX * timePerPixel
+
+  // 将时间增量对齐到0.1s（100ms）的倍数
+  const PLAY_HEAD_DRAG_INTERVAL = 100 // 0.1s
+  const alignedTimeDelta = Math.round(timeDelta / PLAY_HEAD_DRAG_INTERVAL) * PLAY_HEAD_DRAG_INTERVAL
+
+  // 计算新的时间位置（从起始时间开始，按0.1s单位移动）
+  const newTime = dragStartTime + alignedTimeDelta
+
+  // 限制在有效范围内
+  const clampedTime = Math.max(0, Math.min(duration.value, newTime))
+
+  animationStore.seek(clampedTime)
+}
+
+function stopPlayHeadDrag() {
+  if (isPlayHeadDragging) {
+    isPlayHeadDragging = false
+    if (playHeadDragContainer) {
+      playHeadDragContainer.classList.remove('playhead-dragging')
+    }
+    playHeadDragContainer = null
+    document.removeEventListener('mousemove', handlePlayHeadDrag)
+    document.removeEventListener('mouseup', stopPlayHeadDrag)
+  }
+}
+//#endregion
+
+//#region 播放控制逻辑
 let animationFrame: number | null = null
 let startTime = 0
 
@@ -433,12 +543,36 @@ function formatTime(ms: number) {
   const remainingMs = Math.floor(ms % 1000)
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}.${remainingMs.toString().padStart(3, '0')}`
 }
+//#endregion
+
+//#region 关键帧处理逻辑
+// 处理 Delete 键删除选中的关键帧
+function handleKeyDown(e: KeyboardEvent) {
+  // 如果焦点在输入框等元素上，不处理
+  if (
+    e.target instanceof HTMLInputElement ||
+    e.target instanceof HTMLTextAreaElement ||
+    (e.target as HTMLElement).isContentEditable
+  ) {
+    return
+  }
+
+  // Delete 或 Backspace 键删除选中的关键帧
+  // 如果有关键帧被选中，优先删除关键帧，并阻止事件传播到全局处理（避免删除元素）
+  if ((e.key === 'Delete' || e.key === 'Backspace') && animationStore.selectedKeyframe) {
+    e.preventDefault()
+    e.stopPropagation() // 阻止事件传播，避免触发全局的删除元素功能
+    const { property, keyframeIndex } = animationStore.selectedKeyframe
+    handleRemoveKeyframe(property, keyframeIndex)
+    return
+  }
+}
 
 function handleAddKeyframe(property: string, time: number, value: number | string) {
   // 如果 value 为 0 或未提供，尝试从选中元素获取当前值
   let keyframeValue = value
   if (value === 0 || value === undefined || value === null) {
-    const selectedElement = canvasStore.selectedElements[0]
+    const selectedElement = elementStore.selectedElements[0]
     if (selectedElement) {
       // 尝试从 style 中获取属性值
       const styleValue = selectedElement.style[property]
@@ -507,171 +641,49 @@ function handleEditKeyframeValue(property: string, index: number) {
 function handleAddKeyframeFromChannel(property: string, time: number) {
   handleAddKeyframe(property, time, 0)
 }
+//#endregion
 
+//#region 通道处理
+const message = useMessage()
 // 可用的CSS属性列表
 const availableProperties = computed(() => {
-  const allProperties = [
-    { label: 'translateX (X轴位移)', value: 'translateX' },
-    { label: 'translateY (Y轴位移)', value: 'translateY' },
-    { label: 'scaleX (X轴缩放)', value: 'scaleX' },
-    { label: 'scaleY (Y轴缩放)', value: 'scaleY' },
-    { label: 'rotate (旋转)', value: 'rotate' },
-    { label: 'skewX (X轴倾斜)', value: 'skewX' },
-    { label: 'skewY (Y轴倾斜)', value: 'skewY' },
-    { label: 'width (宽度)', value: 'width' },
-    { label: 'height (高度)', value: 'height' },
-    { label: 'opacity (透明度)', value: 'opacity' },
-    { label: 'background-color (背景色)', value: 'backgroundColor' },
-    { label: 'border-radius (圆角)', value: 'borderRadius' },
-    { label: 'left (左边距)', value: 'left' },
-    { label: 'top (上边距)', value: 'top' }
-  ]
-  return allProperties.filter(prop => !tracks.value.find(t => t.property === prop.value))
+  // 将 SUPPORTED_CSS_PROPERTIES 转换为 n-select 所需的格式
+  const properties = SUPPORTED_CSS_PROPERTIES.map((group, groupIndex) => ({
+    label: group.label,
+    type: 'group',
+    key: `group-${groupIndex}-${group.props}`,
+    children: group.children
+      .filter(prop => !tracks.value.find(t => t.property === prop.props))
+      .map((prop, propIndex) => ({
+        label: prop.label + ` (${prop.props})`,
+        value: prop.props,
+        key: `${group.props}-${propIndex}-${prop.props}`
+      }))
+  })).filter(group => group.children.length > 0)
+
+  return properties
 })
 
 function handleAddChannel() {
   if (!selectedProperty.value) {
+    message.warning('请选择一个CSS属性')
     return false
   }
+
   if (!animationStore.selectedElementId) {
-    return true
+    message.warning('请先选择一个元素')
+    return false
   }
+
   animationStore.addTrack(selectedProperty.value)
   selectedProperty.value = null
   showAddChannelDialog.value = false
+  message.success('通道已添加')
   return true
 }
+//#endregion
 
-// 播放头拖拽功能
-let isPlayheadDragging = false
-let playheadDragContainer: HTMLElement | null = null
-let dragStartX = 0
-let dragStartTime = 0
-
-function startPlayheadDrag(e: MouseEvent, type: 'ruler' | 'grid') {
-  e.stopPropagation()
-  e.preventDefault()
-  
-  isPlayheadDragging = true
-  dragStartX = e.clientX
-  dragStartTime = currentTime.value
-  
-  // 根据类型选择容器
-  if (type === 'ruler') {
-    const rulerWrapper = (e.currentTarget as HTMLElement).closest('.timeline-ruler-wrapper') as HTMLElement | null
-    playheadDragContainer = rulerWrapper
-  } else {
-    playheadDragContainer = tracksWrapperRef.value ?? null
-  }
-  
-  if (playheadDragContainer) {
-    // 添加拖拽中的样式类
-    playheadDragContainer.classList.add('playhead-dragging')
-  }
-  
-  document.addEventListener('mousemove', handlePlayheadDrag)
-  document.addEventListener('mouseup', stopPlayheadDrag)
-}
-
-function handlePlayheadDrag(e: MouseEvent) {
-  if (!isPlayheadDragging || !playheadDragContainer) return
-  updatePlayheadTime(e)
-}
-
-function updatePlayheadTime(e: MouseEvent) {
-  if (!playheadDragContainer) return
-  
-  const rect = playheadDragContainer.getBoundingClientRect()
-  const pixelWidth = rect.width
-  
-  // 计算鼠标移动的像素距离
-  const deltaX = e.clientX - dragStartX
-  
-  // 根据当前缩放级别，计算每个像素对应的时间（毫秒）
-  // 总时长 / 像素宽度 = 每像素对应的时间
-  const timePerPixel = duration.value / pixelWidth
-  
-  // 计算移动的时间距离
-  const timeDelta = deltaX * timePerPixel
-  
-  // 将时间增量对齐到0.1s（100ms）的倍数
-  const PLAYHEAD_DRAG_INTERVAL = 100 // 0.1s
-  const alignedTimeDelta = Math.round(timeDelta / PLAYHEAD_DRAG_INTERVAL) * PLAYHEAD_DRAG_INTERVAL
-  
-  // 计算新的时间位置（从起始时间开始，按0.1s单位移动）
-  const newTime = dragStartTime + alignedTimeDelta
-  
-  // 限制在有效范围内
-  const clampedTime = Math.max(0, Math.min(duration.value, newTime))
-  
-  animationStore.seek(clampedTime)
-}
-
-function stopPlayheadDrag() {
-  if (isPlayheadDragging) {
-    isPlayheadDragging = false
-    if (playheadDragContainer) {
-      playheadDragContainer.classList.remove('playhead-dragging')
-    }
-    playheadDragContainer = null
-    document.removeEventListener('mousemove', handlePlayheadDrag)
-    document.removeEventListener('mouseup', stopPlayheadDrag)
-  }
-}
-
-// 点击时间轴跳转
-function handleRulerClick(e: MouseEvent) {
-  // 如果点击的是播放头，不处理（由拖拽处理）
-  if ((e.target as HTMLElement).closest('.timeline-playhead')) {
-    return
-  }
-  
-  const container = e.currentTarget as HTMLElement
-  const rect = container.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const clampedX = Math.max(0, Math.min(rect.width, x))
-  let newTime = (clampedX / rect.width) * duration.value
-  
-  // 点击跳转时，如果启用吸附，对齐到网格；否则对齐到0.1s
-  if (snapEnabled.value && snapInterval.value) {
-    newTime = Math.round(newTime / snapInterval.value) * snapInterval.value
-  } else {
-    // 未启用吸附时，也按照0.1s对齐
-    const PLAYHEAD_CLICK_INTERVAL = 100 // 0.1s
-    newTime = Math.round(newTime / PLAYHEAD_CLICK_INTERVAL) * PLAYHEAD_CLICK_INTERVAL
-  }
-  
-  animationStore.seek(Math.max(0, Math.min(duration.value, newTime)))
-}
-
-function handleTracksClick(e: MouseEvent) {
-  // 如果点击的是关键帧或播放头，不处理
-  if (
-    (e.target as HTMLElement).closest('.keyframe') ||
-    (e.target as HTMLElement).closest('.timeline-playhead')
-  ) {
-    return
-  }
-  
-  if (!tracksWrapperRef.value) return
-  
-  const rect = tracksWrapperRef.value.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const clampedX = Math.max(0, Math.min(rect.width, x))
-  let newTime = (clampedX / rect.width) * duration.value
-  
-  // 点击跳转时，如果启用吸附，对齐到网格；否则对齐到0.1s
-  if (snapEnabled.value && snapInterval.value) {
-    newTime = Math.round(newTime / snapInterval.value) * snapInterval.value
-  } else {
-    // 未启用吸附时，也按照0.1s对齐
-    const PLAYHEAD_CLICK_INTERVAL = 100 // 0.1s
-    newTime = Math.round(newTime / PLAYHEAD_CLICK_INTERVAL) * PLAYHEAD_CLICK_INTERVAL
-  }
-  
-  animationStore.seek(Math.max(0, Math.min(duration.value, newTime)))
-}
-
+//#region 对话框处理
 function handleSaveKeyframeValue() {
   if (!editingKeyframe.value) return false
 
@@ -693,24 +705,9 @@ watch(showKeyframeEditDialog, isOpen => {
 })
 
 function getPropertyLabel(property: string): string {
-  const labels: Record<string, string> = {
-    translateX: 'X位移',
-    translateY: 'Y位移',
-    scaleX: 'X缩放',
-    scaleY: 'Y缩放',
-    rotate: '旋转',
-    skewX: 'X倾斜',
-    skewY: 'Y倾斜',
-    width: '宽度',
-    height: '高度',
-    opacity: '透明度',
-    backgroundColor: '背景色',
-    borderRadius: '圆角',
-    left: '左边距',
-    top: '上边距'
-  }
-  return labels[property] || property
+  return getCSSPropertyByProps(property)?.label || property
 }
+//#endregion
 </script>
 
 <style lang="scss" scoped>
@@ -761,7 +758,7 @@ function getPropertyLabel(property: string): string {
   gap: 4px;
   align-items: center;
   flex-shrink: 0;
-  
+
   :deep(.n-button) {
     margin: 2px 0;
   }
@@ -786,7 +783,7 @@ function getPropertyLabel(property: string): string {
   flex: 1;
   justify-content: flex-end;
   min-width: 0;
-  
+
   :deep(.n-button) {
     margin: 2px 0;
   }
@@ -892,7 +889,9 @@ function getPropertyLabel(property: string): string {
   z-index: 20;
   box-shadow: 0 0 4px rgba(24, 160, 88, 0.5);
   cursor: ew-resize;
-  transition: width 0.1s, background 0.1s;
+  transition:
+    width 0.1s,
+    background 0.1s;
 
   &:hover {
     width: 3px;
@@ -940,12 +939,12 @@ function getPropertyLabel(property: string): string {
 /* 拖拽中的样式 */
 .playhead-dragging {
   user-select: none;
-  
+
   .timeline-playhead {
     width: 3px;
     background: #36ad6a;
     box-shadow: 0 0 8px rgba(24, 160, 88, 0.8);
-    
+
     &::before {
       transform: translateX(-50%) scale(1.1);
       border-top-color: #36ad6a;

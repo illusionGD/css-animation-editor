@@ -31,11 +31,7 @@
               />
             </svg>
           </button>
-          <button
-            class="remove-btn"
-            title="删除通道"
-            @click.stop="removeChannel(track.property)"
-          >
+          <button class="remove-btn" title="删除通道" @click.stop="removeChannel(track.property)">
             <n-icon><CloseIcon /></n-icon>
           </button>
         </div>
@@ -56,6 +52,7 @@ import { NIcon, NEmpty } from 'naive-ui'
 import { Close } from '@vicons/ionicons5'
 import { useAnimationStore } from '@/stores/animationStore'
 import type { AnimationTrack } from '@/types'
+import { getCSSPropertyByProps } from '@/constants'
 
 const CloseIcon = Close
 
@@ -78,23 +75,7 @@ const duration = computed(() => props.duration)
 const selectedChannel = ref<string | null>(null)
 
 function getPropertyLabel(property: string): string {
-  const labels: Record<string, string> = {
-    translateX: 'X位移',
-    translateY: 'Y位移',
-    scaleX: 'X缩放',
-    scaleY: 'Y缩放',
-    rotate: '旋转',
-    skewX: 'X倾斜',
-    skewY: 'Y倾斜',
-    width: '宽度',
-    height: '高度',
-    opacity: '透明度',
-    backgroundColor: '背景色',
-    borderRadius: '圆角',
-    left: '左边距',
-    top: '上边距'
-  }
-  return labels[property] || property
+  return getCSSPropertyByProps(property)?.label || property
 }
 
 function selectChannel(property: string) {
@@ -156,7 +137,7 @@ function removeChannel(property: string) {
   justify-content: space-between;
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
-//   border-top: 1px solid var(--color-border);
+  //   border-top: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color 0.2s;
 
@@ -164,9 +145,9 @@ function removeChannel(property: string) {
     border-top: none;
   }
 
-//   &:last-child {
-//     border-bottom: none;
-//   }
+  //   &:last-child {
+  //     border-bottom: none;
+  //   }
 
   &:hover {
     background: var(--n-colorHover);

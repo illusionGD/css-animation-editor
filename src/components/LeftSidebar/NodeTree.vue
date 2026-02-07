@@ -73,13 +73,13 @@
 import { ref, computed, watch, h } from 'vue'
 import { NInput, NIcon, NTree, NEmpty, NButton, NModal, useMessage, useDialog } from 'naive-ui'
 import { useNodeTreeStore } from '@/stores/nodeTreeStore'
-import { useCanvasStore } from '@/stores/canvasStore'
 import { useElementStore } from '@/stores/elementStore'
 import { useAnimationStore } from '@/stores/animationStore'
 import { parseStyleValue } from '@/utils/calculators'
 import { ELEMENT_DEFAULT_WIDTH, ELEMENT_DEFAULT_HEIGHT } from '@/constants'
 import { Search, Add, Trash, Create } from '@vicons/ionicons5'
 import type { TreeNode, CanvasElement } from '@/types'
+import { useGlobalStore } from '@/stores/globalStore'
 
 const SearchIcon = Search
 const AddIcon = Add
@@ -87,7 +87,7 @@ const TrashIcon = Trash
 const CreateIcon = Create
 
 const nodeTreeStore = useNodeTreeStore()
-const canvasStore = useCanvasStore()
+const globalStore = useGlobalStore()
 const elementStore = useElementStore()
 const animationStore = useAnimationStore()
 
@@ -289,8 +289,8 @@ function handleAddElement() {
 function addRootElement() {
   const _width = 150
   const _height = 100
-  const _x = (canvasStore.canvasConfig.width - _width) / 2
-  const _y = (canvasStore.canvasConfig.height - _height) / 2
+  const _x = (globalStore.layoutSettings.canvasWidth - _width) / 2
+  const _y = (globalStore.layoutSettings.canvasHeight - _height) / 2
   const elementId = elementStore.createElement({
     type: 'div',
     position: {

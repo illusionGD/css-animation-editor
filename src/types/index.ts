@@ -106,3 +106,35 @@ export interface Change {
   timestamp: number
   userId?: string
 }
+
+/** CSS 属性子项类型 */
+export interface CSSProperty {
+  /** 属性名 */
+  props: string
+  /** 中文名称 */
+  label: string
+  /** 属性值类型 */
+  type:  'number' | 'color' | 'string' | 'percentage'
+  /** 单位（如 px, deg, %） */
+  unit?: string
+  /** 默认值 */
+  defaultValue?: number | string
+  /** 最小值（仅数字类型） */
+  min?: number
+  /** 最大值（仅数字类型） */
+  max?: number
+  /** 步长（仅数字类型） */
+  step?: number
+}
+
+/** CSS 属性分组类型 */
+export interface CSSPropertyGroup {
+  /** 分组标签 */
+  label: string
+  /** 分组属性名 */
+  props: string
+  /** 是否可以合并书写 */
+  mergeable: boolean
+  /** 子属性列表 */
+  children: CSSProperty[]
+}

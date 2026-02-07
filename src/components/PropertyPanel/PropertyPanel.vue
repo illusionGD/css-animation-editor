@@ -38,9 +38,9 @@ import { NEmpty, NText } from 'naive-ui'
 import { useElementStore } from '@/stores/elementStore'
 import { useAnimationStore } from '@/stores/animationStore'
 import PropertyGroup from './PropertyGroup.vue'
-import { getPropertiesByGroup, getPropertyGroups, type AnimatableProperty } from './animatableProperties'
 import { interpolateKeyframes } from '@/utils/calculators'
-import type { CanvasElement } from '@/types'
+import type { CanvasElement, CSSProperty } from '@/types'
+import { SUPPORTED_CSS_PROPERTIES } from '@/constants/element'
 
 const elementStore = useElementStore()
 const animationStore = useAnimationStore()
@@ -80,13 +80,13 @@ const propertyValues = computed(() => {
   const selectedKeyframe = animationStore.selectedKeyframe
 
   // 遍历所有可动画属性
-  const allProperties = getPropertiesByGroup('Transform')
-    .concat(getPropertiesByGroup('Layout'))
-    .concat(getPropertiesByGroup('Color'))
-    .concat(getPropertiesByGroup('Effects'))
+  const allProperties: CSSProperty[] = []
+  SUPPORTED_CSS_PROPERTIES.forEach(group => {
+    allProperties.push(...group.children)
+  })
 
   allProperties.forEach(propConfig => {
-    const property = propConfig.name
+    const property = propConfig.props
     let value: string | number | undefined
 
     // 如果当前属性是选中的关键帧属性，使用关键帧的值
@@ -165,20 +165,10 @@ const propertyValues = computed(() => {
 
 // 属性分组：显示所有可动画属性
 const propertyGroups = computed(() => {
-  const allGroups = getPropertyGroups()
-  const result: Array<{ name: string; properties: AnimatableProperty[] }> = []
-
-  allGroups.forEach(groupName => {
-    const properties = getPropertiesByGroup(groupName)
-    if (properties.length > 0) {
-      result.push({
-        name: groupName,
-        properties
-      })
-    }
-  })
-
-  return result
+  return SUPPORTED_CSS_PROPERTIES.map(group => ({
+    name: group.label,
+    properties: group.children
+  })).filter(group => group.properties.length > 0)
 })
 
 function handleUpdate(property: string, value: any) {
@@ -304,13 +294,11 @@ function handleUpdate(property: string, value: any) {
 .property-panel-content {
   flex: 1;
   overflow: auto;
-  padding: 16px;
   @include custom-scrollbar;
 }
 
 .property-groups {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 </style>

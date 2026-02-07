@@ -7,8 +7,8 @@
         :zoom="canvasConfig.zoom"
         :offset-x="canvasConfig.offsetX"
         :offset-y="canvasConfig.offsetY"
-        :canvas-width="canvasConfig.width"
-        :canvas-height="canvasConfig.height"
+        :canvas-width="globalStore.layoutSettings.canvasWidth"
+        :canvas-height="globalStore.layoutSettings.canvasHeight"
       />
       <div
         class="canvas"
@@ -26,8 +26,8 @@
           :canvas-zoom="canvasConfig.zoom"
           :canvas-offset-x="canvasConfig.offsetX"
           :canvas-offset-y="canvasConfig.offsetY"
-          :canvas-width="canvasConfig.width"
-          :canvas-height="canvasConfig.height"
+          :canvas-width="globalStore.layoutSettings.canvasWidth"
+          :canvas-height="globalStore.layoutSettings.canvasHeight"
           @select="handleElementSelect"
           @update="handleElementUpdate"
         />
@@ -71,9 +71,9 @@ const isDark = computed(() => {
 })
 
 const canvasStyle = computed(() => ({
-  width: `${canvasConfig.value.width}px`,
-  height: `${canvasConfig.value.height}px`,
-  backgroundColor: canvasConfig.value.backgroundColor,
+  width: `${globalStore.layoutSettings.canvasWidth}px`,
+  height: `${globalStore.layoutSettings.canvasHeight}px`,
+  backgroundColor: globalStore.layoutSettings.canvasBackgroundColor,
   transform: `translate(${canvasConfig.value.offsetX}px, ${canvasConfig.value.offsetY}px) scale(${canvasConfig.value.zoom})`,
   transformOrigin: 'top left' // 画布左上角为原点
 }))
@@ -197,8 +197,8 @@ function initializeCanvasZoom() {
 
   const containerWidth = container.clientWidth
   const containerHeight = container.clientHeight
-  const canvasWidth = canvasConfig.value.width
-  const canvasHeight = canvasConfig.value.height
+  const canvasWidth = globalStore.layoutSettings.canvasWidth
+  const canvasHeight = globalStore.layoutSettings.canvasHeight
 
   // 计算适合的缩放比例
   const scaleX = (containerWidth - 40) / canvasWidth // 减去标尺空间
@@ -304,7 +304,7 @@ function handleCanvasPanUp(_e: MouseEvent) {
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   transform-origin: top left;
   cursor: default;
-  background: v-bind('canvasConfig.backgroundColor');
+  background: v-bind('globalStore.layoutSettings.canvasBackgroundColor');
   z-index: 1;
 }
 </style>

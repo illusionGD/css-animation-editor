@@ -1,10 +1,14 @@
 import type { Project, ProjectData } from '@/types'
 import { useCanvasStore } from '@/stores/canvasStore'
 import { useAnimationStore } from '@/stores/animationStore'
+import { useGlobalStore } from '@/stores/globalStore'
 
 export function exportJSON(projectName: string): Project {
   const canvasStore = useCanvasStore()
   const animationStore = useAnimationStore()
+  const globalStore = useGlobalStore()
+  const { gridSize, showGrid, showRuler } = canvasStore.canvasConfig
+  const { canvasWidth, canvasHeight, canvasBackgroundColor } = globalStore.layoutSettings
 
   const project: Project = {
     id: `project-${Date.now()}`,
@@ -24,12 +28,12 @@ export function exportJSON(projectName: string): Project {
         keyframes: track.keyframes
       })),
       settings: {
-        canvasWidth: canvasStore.canvasConfig.width,
-        canvasHeight: canvasStore.canvasConfig.height,
-        backgroundColor: canvasStore.canvasConfig.backgroundColor,
-        gridSize: canvasStore.canvasConfig.gridSize,
-        showGrid: canvasStore.canvasConfig.showGrid,
-        showRuler: canvasStore.canvasConfig.showRuler
+        canvasWidth,
+        canvasHeight,
+        backgroundColor: canvasBackgroundColor,
+        gridSize,
+        showGrid,
+        showRuler
       }
     }
   }

@@ -3,9 +3,6 @@ import { ref, computed } from 'vue'
 import { formatDecimal } from '@/utils/formatters'
 import { useElementStore } from './elementStore'
 import {
-  CANVAS_DEFAULT_WIDTH,
-  CANVAS_DEFAULT_HEIGHT,
-  CANVAS_DEFAULT_BACKGROUND_COLOR,
   CANVAS_DEFAULT_GRID_SIZE,
   CANVAS_DEFAULT_ZOOM,
   CANVAS_DEFAULT_OFFSET_X,
@@ -19,9 +16,6 @@ export const useCanvasStore = defineStore('canvas', () => {
 
   // 状态
   const canvasConfig = ref({
-    width: CANVAS_DEFAULT_WIDTH,
-    height: CANVAS_DEFAULT_HEIGHT,
-    backgroundColor: CANVAS_DEFAULT_BACKGROUND_COLOR,
     gridSize: CANVAS_DEFAULT_GRID_SIZE,
     showGrid: CANVAS_DEFAULT_SHOW_GRID,
     showRuler: CANVAS_DEFAULT_SHOW_RULER,

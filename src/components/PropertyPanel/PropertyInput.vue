@@ -7,7 +7,7 @@
       <template #trigger>
         <label class="property-label">{{ config?.label || property }}</label>
       </template>
-      <span>{{ property }}</span>
+      <span class="tips-text">{{ property }}</span>
     </n-tooltip>
     <div class="property-input-wrapper">
       <!-- 数字输入 -->
@@ -51,7 +51,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { NInput, NInputNumber, NColorPicker, NTooltip } from 'naive-ui'
-import { getPropertyConfig, type AnimatableProperty } from './animatableProperties'
+import type { CSSProperty } from '@/types'
+import { getCSSPropertyByProps } from '@/constants/element'
 
 interface Props {
   /** 属性名 */
@@ -59,7 +60,7 @@ interface Props {
   /** 属性值 */
   value: string | number
   /** 属性配置（可选，如果不提供则根据属性名查找） */
-  config?: AnimatableProperty
+  config?: CSSProperty
 }
 
 const props = defineProps<Props>()
@@ -70,7 +71,7 @@ const emit = defineEmits<{
 
 // 获取属性配置
 const config = computed(() => {
-  return props.config || getPropertyConfig(props.property)
+  return props.config || getCSSPropertyByProps(props.property)
 })
 
 // 根据配置类型初始化值
@@ -156,10 +157,15 @@ function handleColorUpdate(val: string | null) {
   padding: 8px 0;
 }
 
+.tips-text {
+    font-size: 12px;
+  color: #fff;
+}
+
 .property-label {
   min-width: 100px;
   font-size: 13px;
-  color: var(--n-textColor);
+  color: #fff;
   font-weight: 500;
   cursor: help;
   user-select: none;

@@ -1,5 +1,6 @@
 import {
   ANIMATION_UI_DEFAULT_DURATION,
+  CANVAS_DEFAULT_BACKGROUND_COLOR,
   CANVAS_DEFAULT_HEIGHT,
   CANVAS_DEFAULT_WIDTH
 } from '@/constants'
@@ -27,6 +28,7 @@ const ANIMATION_MAX_DURATION = 60000
 
 // 布局设置接口
 export interface LayoutSettings {
+  canvasBackgroundColor: string
   canvasWidth: number
   canvasHeight: number
   leftSidebarWidth: number
@@ -51,6 +53,7 @@ export interface ThemeSettings {
 
 export const useGlobalStore = defineStore('global', () => {
   const layoutSettings = ref<LayoutSettings>({
+    canvasBackgroundColor: CANVAS_DEFAULT_BACKGROUND_COLOR,
     canvasWidth: CANVAS_DEFAULT_WIDTH,
     canvasHeight: CANVAS_DEFAULT_HEIGHT,
     leftSidebarWidth: SIDEBAR_DEFAULT_WIDTH,
@@ -119,7 +122,8 @@ export const useGlobalStore = defineStore('global', () => {
       canvasHeight: CANVAS_DEFAULT_HEIGHT,
       leftSidebarWidth: SIDEBAR_DEFAULT_WIDTH,
       rightSidebarWidth: SIDEBAR_DEFAULT_WIDTH,
-      timelineHeight: TIMELINE_DEFAULT_HEIGHT
+      timelineHeight: TIMELINE_DEFAULT_HEIGHT,
+      canvasBackgroundColor: CANVAS_DEFAULT_BACKGROUND_COLOR
     }
     saveToLocalStorage()
   }
