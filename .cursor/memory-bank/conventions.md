@@ -1,10 +1,22 @@
 # 开发规范
 
+## 代码风格要求
+- 使用 TypeScript 严格模式
+- 组件使用 Composition API
+- 使用 `<script setup lang="ts">` 语法
+- 单文件组件使用 PascalCase 命名
+- 工具函数使用 camelCase 命名
+- 类型定义放在 `src/types/` 目录
+- Store 使用 Pinia，放在 `src/stores/` 目录
+
 ## 命名规范
 
 ### 组件命名
 - 组件文件：PascalCase，如 `CanvasElement.vue`
 - 组件名：PascalCase，如 `CanvasElement`
+- 工具函数：camelCase，如 `formatValue.ts`
+- 类型定义：camelCase，如 `animationTypes.ts`
+- Store 文件：camelCase，如 `canvasStore.ts`
 
 ### 变量命名
 - 普通变量：camelCase，如 `selectedElement`
@@ -21,6 +33,10 @@
 - 类型别名：PascalCase，如 `AnimationConfig`
 - 枚举：PascalCase，如 `ElementType`
 
+## 导入路径规范
+- 使用 `@/` 别名导入，如 `import { useCanvasStore } from '@/stores/canvasStore'`
+- 相对路径仅用于同目录文件
+
 ## 组件规范
 
 ### 组件结构
@@ -34,13 +50,24 @@
 // 类型定义
 // Props/Emits
 // Store
-// 状态
-// 计算属性
-// 方法
-// 生命周期
+
+// 按逻辑区分，如：
+//#region 模块功能1
+    // 状态
+    // 计算属性
+    // 生命周期
+    // 方法
+//#endregion
+
+//#region 模块功能2
+    // 状态
+    // 计算属性
+    // 生命周期
+    // 方法
+//#endregion
 </script>
 
-<style scoped>
+<style scoped lang=scss>
 /* 样式 */
 </style>
 ```
@@ -117,12 +144,10 @@ export const useElementStore = defineStore('element', () => {
    - 画布相关：`canvas.ts`
    - 元素相关：`element.ts`
    - 动画相关：`animation.ts`
-   - 颜色相关：`colors.ts`
    - 统一导出：`index.ts`
 
 2. **模块内常量** (`模块/constants.ts`) - 模块专用的常量
    - 时间轴相关：`src/components/Timeline/constants.ts`
-   - 布局相关：`src/stores/uiStore.ts`（小常量可直接放在 Store 文件内）
 
 ### 判断标准
 
@@ -154,6 +179,13 @@ export const ELEMENT_DEFAULT_WIDTH = 100
 export const TIMELINE_BASE_INTERVAL = 100
 ```
 
+## 样式书写规范
+原则：尽量复用已有样式，做到精简
+- 采用sass规范
+- 常用的公共样式放在`src/assets/styles/common.scss`下，通过class名称使用
+- 常用mixin放在`src/assets/styles/mixins.scss`下
+- 颜色可用naive-ui的色值css变量或者`src/assets/styles/variables.scss`下的变量
+
 ## Git提交规范
 
 - feat: 新功能
@@ -164,3 +196,10 @@ export const TIMELINE_BASE_INTERVAL = 100
 - perf: 性能优化
 - test: 测试
 - chore: 构建/工具
+
+## 注意事项
+- 保持代码简洁，避免过度抽象
+- 性能优先，使用虚拟滚动处理大列表
+- 错误处理要完善，使用 try-catch
+- 注释要清晰，复杂逻辑必须注释
+

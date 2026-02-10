@@ -53,7 +53,6 @@ css-animation-editor/
 **功能**:
 
 - 可视化编辑区域，支持元素拖拽、缩放、旋转
-- 标尺系统（水平/垂直）
 - 网格背景
 - 实时预览动画效果
 - 元素选择与多选
@@ -61,20 +60,17 @@ css-animation-editor/
 **关键文件**:
 
 - `Canvas.vue`: 主画布组件
-- `CanvasRuler.vue`: 标尺组件
 - `CanvasElement.vue`: 画布元素组件
 - `CanvasGrid.vue`: 网格背景
 
 **数据结构**:
 
 ```typescript
-interface CanvasElement {
+interface ElementType {
   id: string;
   type: 'div' | 'span' | 'img' | 'custom';
   style: CSSProperties;
   animation: AnimationConfig;
-  position: { x: number; y: number };
-  size: { width: number; height: number };
 }
 ```
 
@@ -313,7 +309,6 @@ interface PresetSchema {
 - `animationStore.ts`: 动画状态（时间轴、播放状态、关键帧）
 - `nodeTreeStore.ts`: 节点树状态（节点树结构、选中节点、展开状态）
 - `presetStore.ts`: 预设管理
-- `uiStore.ts`: UI状态（主题、布局尺寸、设置、左侧栏当前标签页）
 
 ### 7. 布局系统
 
@@ -1024,7 +1019,6 @@ interface AnimationSequence {
 graph TB
     UserAction[用户操作] --> CanvasStore[Canvas Store]
     UserAction --> AnimationStore[Animation Store]
-    UserAction --> UIStore[UI Store]
     UserAction --> NodeTreeStore[NodeTree Store]
     
     CanvasStore --> CanvasComponent[画布组件]

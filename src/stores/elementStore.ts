@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { CanvasElement, AnimationConfig } from '@/types'
-import { ANIMATABLE_PROPERTIES } from '@/components/PropertyPanel/animatableProperties'
+import type { ElementType, AnimationConfig, CSSProperty, CSSProperties } from '@/types'
 import {
   ANIMATION_DEFAULT_DURATION,
   ANIMATION_DEFAULT_DELAY,
@@ -12,7 +11,8 @@ import {
   ELEMENT_DEFAULT_WIDTH_PX,
   ELEMENT_DEFAULT_HEIGHT_PX,
   ELEMENT_DEFAULT_POSITION_X,
-  ELEMENT_DEFAULT_POSITION_Y
+  ELEMENT_DEFAULT_POSITION_Y,
+  SUPPORTED_CSS_PROPERTIES
 } from '@/constants'
 
 // 默认动画配置
@@ -23,16 +23,18 @@ const defaultAnimation: AnimationConfig = {
   direction: ANIMATION_DEFAULT_DIRECTION,
   fillMode: ANIMATION_DEFAULT_FILL_MODE,
   easing: ANIMATION_DEFAULT_EASING,
-  keyframes: []
+  tracks: []
 }
 
 // 获取默认样式（根据可动画属性的默认值）
 function getDefaultStyle(): Record<string, string | number> {
   const style: Record<string, string | number> = {}
-  ANIMATABLE_PROPERTIES.forEach(prop => {
-    if (prop.defaultValue !== undefined) {
-      style[prop.name] = prop.defaultValue
-    }
+  SUPPORTED_CSS_PROPERTIES.forEach(group => {
+    group.children.forEach(prop => {
+      if (prop.defaultValue !== undefined) {
+        style[prop.props] = prop.defaultValue
+      }
+    })
   })
   return style
 }
@@ -40,7 +42,7 @@ function getDefaultStyle(): Record<string, string | number> {
 export const useElementStore = defineStore('element', () => {
   // ========== 状态 ==========
   // 使用 Map 存储元素，提高查找性能
-  const elements = ref<Map<string, CanvasElement>>(new Map())
+  const elements = ref<Map<string, ElementType>>(new Map())
 
   // 选中状态：存储选中的元素 ID 数组
   const selectedElementIds = ref<string[]>([])
@@ -56,7 +58,7 @@ export const useElementStore = defineStore('element', () => {
   const selectedElements = computed(() => {
     return selectedElementIds.value
       .map(id => elements.value.get(id))
-      .filter((el): el is CanvasElement => el !== undefined)
+      .filter((el): el is ElementType => el !== undefined)
   })
 
   // 是否有选中元素
@@ -68,7 +70,7 @@ export const useElementStore = defineStore('element', () => {
   // ========== 父子关系管理（辅助函数，在CRUD之前定义） ==========
 
   // 获取元素的子元素（内部辅助函数）
-  function getChildrenInternal(parentId?: string): CanvasElement[] {
+  function getChildrenInternal(parentId?: string): ElementType[] {
     return elementsArray.value
       .filter(el => (parentId === undefined ? !el.parentId : el.parentId === parentId))
       .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -76,7 +78,7 @@ export const useElementStore = defineStore('element', () => {
 
   // ========== CRUD 操作 ==========
 
-  function createElement(data: Partial<CanvasElement>): string {
+  function createElement(data: Partial<ElementType>): string {
     const id = data.id || crypto.randomUUID()
 
     // 如果指定了 parentId，验证父元素存在
@@ -100,36 +102,41 @@ export const useElementStore = defineStore('element', () => {
     if (!mergedStyle.width) {
       mergedStyle.width = ELEMENT_DEFAULT_WIDTH_PX
     }
+
     if (!mergedStyle.height) {
       mergedStyle.height = ELEMENT_DEFAULT_HEIGHT_PX
     }
-
-    const element: CanvasElement = {
+    let level = 0
+    if (data.parentId) {
+      const parent = elements.value.get(data.parentId)
+      level = parent ? parent.level + 1 : 0
+    }
+    const element: ElementType = {
       id,
       type: data.type || 'div',
       style: mergedStyle,
       animation: data.animation || defaultAnimation,
-      position: data.position || { x: ELEMENT_DEFAULT_POSITION_X, y: ELEMENT_DEFAULT_POSITION_Y },
-      name: data.name,
+      name: data.name || '元素',
       visible: data.visible !== false,
       locked: data.locked || false,
       parentId: data.parentId,
       order,
-      tracks: data.tracks || [] // 初始化动画轨道
+      level
     }
+    console.log("🚀 ~ element:", element)
     elements.value.set(id, element)
     return id
   }
 
-  function getElement(id: string): CanvasElement | undefined {
+  function getElement(id: string): ElementType | undefined {
     return elements.value.get(id)
   }
 
-  function getElements(): CanvasElement[] {
+  function getElements(): ElementType[] {
     return elementsArray.value
   }
 
-  function updateElement(id: string, updates: Partial<CanvasElement>): void {
+  function updateElement(id: string, updates: Partial<ElementType>): void {
     const element = elements.value.get(id)
     if (element) {
       // 使用展开运算符创建新对象，保持响应式
@@ -137,11 +144,18 @@ export const useElementStore = defineStore('element', () => {
     }
   }
 
+  function updateElementStyle(id: string, style: CSSProperties): void {
+    const element = elements.value.get(id)
+    if (!element) return
+    const newStyle = { ...element.style, ...style }
+    elements.value.set(id, { ...element, style: newStyle })
+  }
+
   function deleteElement(id: string): void {
     // 先删除所有后代（递归删除）
     // 使用内部辅助函数获取后代
-    function getDescendantsInternal(elementId: string): CanvasElement[] {
-      const descendants: CanvasElement[] = []
+    function getDescendantsInternal(elementId: string): ElementType[] {
+      const descendants: ElementType[] = []
       const children = getChildrenInternal(elementId)
       children.forEach(child => {
         descendants.push(child)
@@ -165,10 +179,10 @@ export const useElementStore = defineStore('element', () => {
     return elements.value.has(id)
   }
 
-  function getElementsByIds(ids: string[]): CanvasElement[] {
+  function getElementsByIds(ids: string[]): ElementType[] {
     return ids
       .map(id => elements.value.get(id))
-      .filter((el): el is CanvasElement => el !== undefined)
+      .filter((el): el is ElementType => el !== undefined)
   }
 
   function deleteElements(ids: string[]): void {
@@ -230,9 +244,6 @@ export const useElementStore = defineStore('element', () => {
     selectedElementIds.value = []
   }
 
-  function selectElements(ids: string[]): void {
-    selectElement(ids, false)
-  }
 
   function toggleSelection(ids: string | string[]): void {
     const idArray = Array.isArray(ids) ? ids : [ids]
@@ -253,20 +264,20 @@ export const useElementStore = defineStore('element', () => {
   // ========== 父子关系管理 ==========
 
   // 获取元素的子元素
-  function getChildren(parentId?: string): CanvasElement[] {
+  function getChildren(parentId?: string): ElementType[] {
     return getChildrenInternal(parentId)
   }
 
   // 获取元素的父元素
-  function getParent(elementId: string): CanvasElement | undefined {
+  function getParent(elementId: string): ElementType | undefined {
     const element = elements.value.get(elementId)
     if (!element || !element.parentId) return undefined
     return elements.value.get(element.parentId)
   }
 
   // 获取元素的所有祖先元素（从父元素到根元素）
-  function getAncestors(elementId: string): CanvasElement[] {
-    const ancestors: CanvasElement[] = []
+  function getAncestors(elementId: string): ElementType[] {
+    const ancestors: ElementType[] = []
     let current = getParent(elementId)
     while (current) {
       ancestors.push(current)
@@ -276,8 +287,8 @@ export const useElementStore = defineStore('element', () => {
   }
 
   // 获取元素的所有后代元素（递归）
-  function getDescendants(elementId: string): CanvasElement[] {
-    const descendants: CanvasElement[] = []
+  function getDescendants(elementId: string): ElementType[] {
+    const descendants: ElementType[] = []
     const children = getChildren(elementId)
     children.forEach(child => {
       descendants.push(child)
@@ -349,14 +360,14 @@ export const useElementStore = defineStore('element', () => {
   }
 
   // 获取根元素（没有父元素的元素）
-  function getRootElements(): CanvasElement[] {
+  function getRootElements(): ElementType[] {
     return getChildren(undefined)
   }
 
   // 获取元素的动画轨道（只读方法，供其他store使用）
-  function getElementTracks(elementId: string): import('@/types').AnimationTrack[] {
+  function getElementTracks(elementId: string) {
     const element = elements.value.get(elementId)
-    return element?.tracks || []
+    return element?.animation.tracks || []
   }
 
   // ========== 导出 ==========
@@ -396,6 +407,12 @@ export const useElementStore = defineStore('element', () => {
      * @param updates 要更新的字段
      */
     updateElement,
+    /**
+     * 更新元素样式
+     * @param id 元素 ID
+     * @param style 要更新的样式字段
+     */
+    updateElementStyle,
     /**
      * 删除元素
      * @param id 元素 ID
@@ -439,11 +456,6 @@ export const useElementStore = defineStore('element', () => {
      * 清空选中状态
      */
     clearSelection,
-    /**
-     * 选中多个元素（替换模式，等同于 selectElement(ids, false)）
-     * @param ids 元素 ID 数组
-     */
-    selectElements,
     /**
      * 切换元素选中状态（多选模式）
      * @param ids 元素 ID 或 ID 数组

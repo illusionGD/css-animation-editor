@@ -1,9 +1,9 @@
-import type { CanvasElement } from '@/types'
+import type { ElementType } from '@/types'
 import { exportCSS } from './cssExporter'
 import { parseStyleValue } from '../calculators'
 import { ELEMENT_DEFAULT_WIDTH, ELEMENT_DEFAULT_HEIGHT, COLOR_ELEMENT_DEFAULT_BACKGROUND } from '@/constants'
 
-export function exportHTML(elements: CanvasElement[]): string {
+export function exportHTML(elements: ElementType[]): string {
   const css = exportCSS(elements)
 
   let html = `<!DOCTYPE html>

@@ -1,154 +1,85 @@
 <template>
   <div class="timeline">
-    <div class="timeline-body">
-      <!-- 左侧（20%）：顶部控制按钮 + 通道列表 -->
-      <div class="timeline-left">
-        <!-- 顶部控制按钮区域 -->
-        <div class="timeline-left-header">
-          <div class="playback-controls">
-            <n-tooltip trigger="hover">
-              <template #trigger>
-                <n-button size="small" @click="togglePlay">
-                  {{ isPlaying ? '⏸' : '▶' }}
-                </n-button>
-              </template>
-              {{ isPlaying ? '暂停' : '播放' }}
-            </n-tooltip>
-            <n-tooltip trigger="hover">
-              <template #trigger>
-                <n-button size="small" @click="stop">
-                  <template #icon>
-                    <n-icon><RefreshIcon /></n-icon>
-                  </template>
-                </n-button>
-              </template>
-              重置
-            </n-tooltip>
-            <n-tooltip trigger="hover">
-              <template #trigger>
-                <n-button size="small" type="primary" @click="showAddChannelDialog = true">
-                  <template #icon>
-                    <n-icon><AddIcon /></n-icon>
-                  </template>
-                </n-button>
-              </template>
-              添加通道
-            </n-tooltip>
-          </div>
-          <div class="timeline-info">
-            <span>{{ formatTime(currentTime) }} / </span>
-            <n-input-number
-              v-model:value="duration"
-              :min="TIMELINE_MIN_DURATION"
-              :max="TIMELINE_MAX_DURATION"
-              :step="TIMELINE_DURATION_STEP"
-              size="small"
-              :show-button="false"
-              style="width: 80px"
-            />
-          </div>
-          <div class="timeline-settings">
-            <n-tooltip trigger="hover">
-              <template #trigger>
-                <n-button
-                  size="small"
-                  :type="globalStore.exportSettings.autoSave ? 'primary' : 'default'"
-                  @click="
-                    e =>
-                      globalStore.setExportSettings({
-                        autoSave: !globalStore.exportSettings.autoSave
-                      })
-                  "
-                >
-                  <template #icon>
-                    <n-icon><FlashIcon /></n-icon>
-                  </template>
-                </n-button>
-              </template>
-              自动K帧
-            </n-tooltip>
-          </div>
+    <div class="timeline-head flex-between">
+      <div class="timeline-controls-left flex-center">
+        <div class="playback-controls flex-center">
+          <n-button size="small" quaternary>
+            <template #icon>
+              <n-icon><component :is="PlaySkipBack" /></n-icon>
+            </template>
+          </n-button>
+          <n-button size="small" quaternary>
+            <template #icon>
+              <n-icon><component :is="PlayBack" /></n-icon>
+            </template>
+          </n-button>
+          <n-button size="small" type="primary" @click="playAnimation">
+            <template #icon>
+              <n-icon v-if="animationStore.isPlaying"><component :is="Pause" /></n-icon>
+              <n-icon v-else><component :is="Play" /></n-icon>
+            </template>
+          </n-button>
+          <n-button size="small" quaternary>
+            <template #icon>
+              <n-icon><component :is="PlayForward" /></n-icon>
+            </template>
+          </n-button>
+          <n-button size="small" quaternary>
+            <template #icon>
+              <n-icon><component :is="PlaySkipForward" /></n-icon>
+            </template>
+          </n-button>
+          <n-button size="small" quaternary @click="showAddChannel">
+            <template #icon>
+              <n-icon><component :is="Add" /></n-icon>
+            </template>
+          </n-button>
         </div>
-        <!-- 通道列表 -->
-        <TimelineChannels
-          ref="channelsRef"
-          :tracks="(tracks as AnimationTrack[])"
-          :current-time="currentTime"
-          :duration="duration"
-          @add-keyframe="handleAddKeyframeFromChannel"
+
+        <n-select
+          class="loop-mode-select"
+          size="small"
+          :options="loopModeOptions"
+          placeholder="循环模式"
         />
       </div>
-
-      <div class="timeline-right">
-        <!-- 时间轴标尺（与左侧顶部高度对齐） -->
-        <div class="timeline-ruler-wrapper" @click="handleRulerClick">
-          <div class="timeline-ruler-box">
-            <TimelineRuler :duration="duration" :zoom="zoom" />
-          </div>
-          <!-- 时间刻度格子 -->
-          <div class="timeline-time-grid">
-            <div
-              v-for="tick in timeGridTicks"
-              :key="`grid-${tick.time}`"
-              class="time-grid-tick"
-              :class="{ 'time-grid-tick-major': tick.isMajor }"
-              :style="{ left: `${tick.position}%` }"
-            >
-              <div class="time-grid-line" />
-            </div>
-          </div>
-          <!-- 播放头（在标尺上） -->
-          <div
-            class="timeline-playhead timeline-playhead-ruler"
-            :style="{ left: `${(currentTime / duration) * 100}%` }"
-            @mousedown.stop="startPlayHeadDrag($event, 'ruler')"
-          />
-        </div>
-        <!-- 时间刻度网格 -->
-        <div
-          ref="tracksWrapperRef"
-          class="timeline-tracks-wrapper"
-          @wheel="handleWheel"
-          @click="handleTracksClick"
-        >
-          <TimelineGrid :duration="duration" :zoom="zoom" :width="contentWidth" />
-          <div class="timeline-tracks">
-            <TimelineTrack
-              v-for="track in tracks"
-              :key="track.property"
-              :track="track"
-              :current-time="currentTime"
-              :duration="duration"
-              :snap-enabled="snapEnabled"
-              :snap-interval="snapInterval"
-              @add-keyframe="handleAddKeyframe"
-              @remove-keyframe="handleRemoveKeyframe"
-              @update-keyframe-time="handleUpdateKeyframeTime"
-              @edit-keyframe-value="handleEditKeyframeValue"
-              @select-keyframe="handleSelectKeyframe"
-            />
-            <n-empty
-              v-if="tracks.length === 0"
-              description="请先选择一个元素，然后添加通道"
-              style="padding: 40px"
-            />
-          </div>
-          <!-- 播放头（在网格上） -->
-          <div
-            class="timeline-playhead timeline-playhead-grid"
-            :style="{ left: `${(currentTime / duration) * 100}%` }"
-            @mousedown.stop="startPlayHeadDrag($event, 'grid')"
-          />
+      <div class="timeline-controls-right flex-center">
+        <div class="control-item flex-center">
+          <span class="control-label">时长</span>
+          <n-input-number size="small" class="control-input" :show-button="false">
+            <template #suffix>s</template>
+          </n-input-number>
         </div>
       </div>
     </div>
+    <div class="timeline-bottom">
+      <div class="channels">
+        <TimelineChannels></TimelineChannels>
+      </div>
+      <div class="tracks-container">
+        <TimelineTracks
+          :tracks="animationStore.tracks"
+          :current-time="animationStore.currentTime"
+          :duration="animationStore.duration"
+          :fps="60"
+          :zoom="timelineZoom"
+          @update:zoom="timelineZoom = $event"
+          @keyframe-move="handleKeyFrameMove"
+          @keyframe-select="handleKeyFrameSelect"
+        />
+      </div>
+    </div>
+    <!-- 添加通道弹窗 -->
     <n-modal
-      v-model:show="showAddChannelDialog"
+      v-model:show="isShowAddChannelModal"
+      title="添加动画通道"
       preset="dialog"
-      title="添加通道"
+      :closable="true"
+      :mask-closable="true"
+      size="small"
       positive-text="确定"
       negative-text="取消"
-      @positive-click="handleAddChannel"
+      @positive-click="addChannel"
     >
       <n-select
         v-model:value="selectedProperty"
@@ -158,38 +89,6 @@
         label-field="label"
         value-field="value"
       />
-    </n-modal>
-    <!-- 关键帧值编辑对话框 -->
-    <n-modal
-      v-model:show="showKeyframeEditDialog"
-      preset="dialog"
-      title="编辑关键帧值"
-      positive-text="确定"
-      negative-text="取消"
-      @positive-click="handleSaveKeyframeValue"
-    >
-      <div v-if="editingKeyframe" class="keyframe-edit-form">
-        <div class="form-item">
-          <label>属性：</label>
-          <span>{{ editingKeyframe.property }}</span>
-        </div>
-        <div class="form-item">
-          <n-input-number
-            v-if="typeof editingKeyframe.value === 'number'"
-            v-model:value="editingKeyframe.value"
-            :min="undefined"
-            :max="undefined"
-            :step="1"
-            style="width: 100%"
-          />
-          <n-input
-            v-else
-            v-model:value="editingKeyframe.value"
-            placeholder="输入值"
-            style="width: 100%"
-          />
-        </div>
-      </div>
     </n-modal>
   </div>
 </template>
@@ -207,12 +106,23 @@ import {
   NTooltip,
   useMessage
 } from 'naive-ui'
-import { Add, Refresh, Flash } from '@vicons/ionicons5'
+import {
+  Add,
+  Refresh,
+  Flash,
+  PlaySkipBack,
+  PlayBack,
+  Pause,
+  PlayForward,
+  PlaySkipForward,
+  Play
+} from '@vicons/ionicons5'
 import { useAnimationStore } from '@/stores/animationStore'
 import TimelineTrack from './TimelineTrack.vue'
 import TimelineGrid from './TimelineGrid.vue'
 import TimelineRuler from './TimelineRuler.vue'
 import TimelineChannels from './TimelineChannels.vue'
+import TimelineTracks from './TimelineTracks.vue'
 import {
   TIMELINE_BASE_INTERVAL,
   TIMELINE_INTERVALS,
@@ -230,430 +140,53 @@ import { getCSSPropertyByProps, SUPPORTED_CSS_PROPERTIES } from '@/constants/ele
 const animationStore = useAnimationStore()
 const elementStore = useElementStore()
 const globalStore = useGlobalStore()
+const message = useMessage()
 
-const AddIcon = Add
-const RefreshIcon = Refresh
-const FlashIcon = Flash
-const showAddChannelDialog = ref(false)
-const selectedProperty = ref<string | null>(null)
-const showKeyframeEditDialog = ref(false)
-const editingKeyframe = ref<{
-  property: string
-  index: number
-  value: number | string
-} | null>(null)
+//#region 顶部操作按钮
+const loopModeOptions = [
+  { label: '只播放一遍', value: 'normal' },
+  { label: '循环播放', value: 'infinite' }
+]
 
-const channelsRef = ref<InstanceType<typeof TimelineChannels>>()
-const tracksWrapperRef = ref<HTMLElement>()
-const zoom = ref(1)
-const snapEnabled = ref(true)
-const contentWidth = ref(TIMELINE_DEFAULT_CONTENT_WIDTH)
+// 时间轴缩放
+const timelineZoom = ref(100)
 
-const isPlaying = computed(() => animationStore.isPlaying)
-const currentTime = computed(() => animationStore.currentTime)
-const duration = computed({
-  get: () => animationStore.duration,
-  set: val => animationStore.setDuration(val)
-})
-const tracks = computed(() => animationStore.tracks)
-
-// 计算吸附间隔（根据缩放级别动态调整）
-const snapInterval = computed(() => {
-  return TIMELINE_BASE_INTERVAL / zoom.value
-})
-
-// 计算时间刻度格子
-const timeGridTicks = computed(() => {
-  const ticks: Array<{ time: number; position: number; isMajor: boolean }> = []
-  const adjustedInterval = TIMELINE_BASE_INTERVAL / zoom.value
-
-  let timeInterval = TIMELINE_INTERVALS[TIMELINE_INTERVALS.length - 1]
-  for (const interval of TIMELINE_INTERVALS) {
-    if (adjustedInterval <= interval) {
-      timeInterval = interval
-      break
-    }
-  }
-
-  const majorInterval = timeInterval * TIMELINE_MAJOR_INTERVAL_MULTIPLIER
-
-  for (let time = 0; time <= duration.value; time += timeInterval) {
-    const isMajor = Math.abs(time % majorInterval) < 0.1
-    const position = (time / duration.value) * 100
-    ticks.push({ time, position, isMajor })
-  }
-
-  return ticks
-})
-//#endregion
-
-//#region 初始化和清理
-// 更新内容宽度
-function updateContentWidth() {
-  if (tracksWrapperRef.value) {
-    contentWidth.value = tracksWrapperRef.value.clientWidth
-  }
-}
-
-onMounted(() => {
-  updateContentWidth()
-  window.addEventListener('resize', updateContentWidth)
-  window.addEventListener('keydown', handleKeyDown)
-  // 同步滚动：通道列表和时间轴区域
-  nextTick(() => {
-    syncScroll()
-  })
-})
-
-// 同步滚动功能
-function syncScroll() {
-  if (!channelsRef.value || !tracksWrapperRef.value) return
-
-  const channelsList = channelsRef.value.$el?.querySelector('.channels-list') as HTMLElement
-  if (!channelsList) return
-
-  // 监听通道列表滚动，同步到时间轴区域
-  channelsList.addEventListener('scroll', () => {
-    if (tracksWrapperRef.value) {
-      tracksWrapperRef.value.scrollTop = channelsList.scrollTop
-    }
-  })
-
-  // 监听时间轴区域滚动，同步到通道列表
-  tracksWrapperRef.value.addEventListener('scroll', () => {
-    if (channelsList) {
-      channelsList.scrollTop = tracksWrapperRef.value!.scrollTop
-    }
-  })
-}
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateContentWidth)
-  window.removeEventListener('keydown', handleKeyDown)
-  stopAnimation()
-  stopPlayHeadDrag()
-})
-//#endregion
-
-//#region 时间轴交互（缩放、吸附、网格）
-function handleWheel(e: WheelEvent) {
-  // 滚轮缩放时间轴（不需要按Ctrl/Cmd）
-  e.preventDefault()
-  const delta = e.deltaY > 0 ? 0.9 : 1.1
-  const newZoom = zoom.value * delta
-  // 限制缩放范围，确保最小间隔不会小于 100ms (0.1s)
-  // TIMELINE_BASE_INTERVAL / zoom 应该 >= 100，所以 zoom <= TIMELINE_BASE_INTERVAL / 100 = 1
-  // 最大缩放：确保最小间隔不会太小，这里限制最大 zoom 为 10
-  zoom.value = Math.max(0.1, Math.min(10, newZoom))
-  updateContentWidth()
-  // 缩放后，自动将播放头对齐到最近的0.1s刻度
-  alignPlayHeadToNearestTick()
-}
-
-// 将播放头对齐到最近的0.1s刻度
-function alignPlayHeadToNearestTick() {
-  const PLAY_HEAD_ALIGN_INTERVAL = 100 // 0.1s
-  const currentTimeValue = currentTime.value
-  const alignedTime =
-    Math.round(currentTimeValue / PLAY_HEAD_ALIGN_INTERVAL) * PLAY_HEAD_ALIGN_INTERVAL
-  animationStore.seek(Math.max(0, Math.min(duration.value, alignedTime)))
-}
-
-// 点击时间轴跳转
-function handleRulerClick(e: MouseEvent) {
-  // 如果点击的是播放头，不处理（由拖拽处理）
-  if ((e.target as HTMLElement).closest('.timeline-playhead')) {
-    return
-  }
-
-  const container = e.currentTarget as HTMLElement
-  const rect = container.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const clampedX = Math.max(0, Math.min(rect.width, x))
-  let newTime = (clampedX / rect.width) * duration.value
-
-  // 点击跳转时，如果启用吸附，对齐到网格；否则对齐到0.1s
-  if (snapEnabled.value && snapInterval.value) {
-    newTime = Math.round(newTime / snapInterval.value) * snapInterval.value
-  } else {
-    // 未启用吸附时，也按照0.1s对齐
-    const PLAYHEAD_CLICK_INTERVAL = 100 // 0.1s
-    newTime = Math.round(newTime / PLAYHEAD_CLICK_INTERVAL) * PLAYHEAD_CLICK_INTERVAL
-  }
-
-  animationStore.seek(Math.max(0, Math.min(duration.value, newTime)))
-}
-
-function handleTracksClick(e: MouseEvent) {
-  // 如果点击的是关键帧或播放头，不处理
-  if (
-    (e.target as HTMLElement).closest('.keyframe') ||
-    (e.target as HTMLElement).closest('.timeline-playhead')
-  ) {
-    return
-  }
-
-  if (!tracksWrapperRef.value) return
-
-  const rect = tracksWrapperRef.value.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const clampedX = Math.max(0, Math.min(rect.width, x))
-  let newTime = (clampedX / rect.width) * duration.value
-
-  // 点击跳转时，如果启用吸附，对齐到网格；否则对齐到0.1s
-  if (snapEnabled.value && snapInterval.value) {
-    newTime = Math.round(newTime / snapInterval.value) * snapInterval.value
-  } else {
-    // 未启用吸附时，也按照0.1s对齐
-    const PLAYHEAD_CLICK_INTERVAL = 100 // 0.1s
-    newTime = Math.round(newTime / PLAYHEAD_CLICK_INTERVAL) * PLAYHEAD_CLICK_INTERVAL
-  }
-
-  animationStore.seek(Math.max(0, Math.min(duration.value, newTime)))
-}
-//#endregion
-
-//#region 播放头拖拽
-let isPlayHeadDragging = false
-let playHeadDragContainer: HTMLElement | null = null
-let dragStartX = 0
-let dragStartTime = 0
-
-function startPlayHeadDrag(e: MouseEvent, type: 'ruler' | 'grid') {
-  e.stopPropagation()
-  e.preventDefault()
-
-  isPlayHeadDragging = true
-  dragStartX = e.clientX
-  dragStartTime = currentTime.value
-
-  // 根据类型选择容器
-  if (type === 'ruler') {
-    const rulerWrapper = (e.currentTarget as HTMLElement).closest(
-      '.timeline-ruler-wrapper'
-    ) as HTMLElement | null
-    playHeadDragContainer = rulerWrapper
-  } else {
-    playHeadDragContainer = tracksWrapperRef.value ?? null
-  }
-
-  if (playHeadDragContainer) {
-    // 添加拖拽中的样式类
-    playHeadDragContainer.classList.add('playhead-dragging')
-  }
-
-  document.addEventListener('mousemove', handlePlayHeadDrag)
-  document.addEventListener('mouseup', stopPlayHeadDrag)
-}
-
-function handlePlayHeadDrag(e: MouseEvent) {
-  if (!isPlayHeadDragging || !playHeadDragContainer) return
-  updatePlayHeadTime(e)
-}
-
-function updatePlayHeadTime(e: MouseEvent) {
-  if (!playHeadDragContainer) return
-
-  const rect = playHeadDragContainer.getBoundingClientRect()
-  const pixelWidth = rect.width
-
-  // 计算鼠标移动的像素距离
-  const deltaX = e.clientX - dragStartX
-
-  // 根据当前缩放级别，计算每个像素对应的时间（毫秒）
-  // 总时长 / 像素宽度 = 每像素对应的时间
-  const timePerPixel = duration.value / pixelWidth
-
-  // 计算移动的时间距离
-  const timeDelta = deltaX * timePerPixel
-
-  // 将时间增量对齐到0.1s（100ms）的倍数
-  const PLAY_HEAD_DRAG_INTERVAL = 100 // 0.1s
-  const alignedTimeDelta = Math.round(timeDelta / PLAY_HEAD_DRAG_INTERVAL) * PLAY_HEAD_DRAG_INTERVAL
-
-  // 计算新的时间位置（从起始时间开始，按0.1s单位移动）
-  const newTime = dragStartTime + alignedTimeDelta
-
-  // 限制在有效范围内
-  const clampedTime = Math.max(0, Math.min(duration.value, newTime))
-
-  animationStore.seek(clampedTime)
-}
-
-function stopPlayHeadDrag() {
-  if (isPlayHeadDragging) {
-    isPlayHeadDragging = false
-    if (playHeadDragContainer) {
-      playHeadDragContainer.classList.remove('playhead-dragging')
-    }
-    playHeadDragContainer = null
-    document.removeEventListener('mousemove', handlePlayHeadDrag)
-    document.removeEventListener('mouseup', stopPlayHeadDrag)
-  }
-}
-//#endregion
-
-//#region 播放控制逻辑
-let animationFrame: number | null = null
-let startTime = 0
-
-function togglePlay() {
-  if (isPlaying.value) {
+function playAnimation() {
+  if (animationStore.isPlaying) {
     animationStore.pause()
-    stopAnimation()
   } else {
     animationStore.play()
-    startAnimation()
   }
 }
 
-function stop() {
-  animationStore.stop()
-  stopAnimation()
+// 处理关键帧移动
+function handleKeyFrameMove(trackIndex: number, keyFrameIndex: number, newTime: number) {
+  // TODO: 更新关键帧时间
+  console.log('Move keyframe', trackIndex, keyFrameIndex, newTime)
 }
 
-function startAnimation() {
-  startTime = performance.now() - currentTime.value
-  function animate() {
-    if (isPlaying.value) {
-      const elapsed = performance.now() - startTime
-      if (elapsed >= duration.value) {
-        animationStore.stop()
-        stopAnimation()
-      } else {
-        animationStore.seek(elapsed)
-        animationFrame = requestAnimationFrame(animate)
-      }
-    }
-  }
-  animationFrame = requestAnimationFrame(animate)
+// 处理关键帧选中
+function handleKeyFrameSelect(trackIndex: number, keyFrameIndex: number) {
+  // TODO: 选中关键帧
+  console.log('Select keyframe', trackIndex, keyFrameIndex)
 }
 
-function stopAnimation() {
-  if (animationFrame !== null) {
-    cancelAnimationFrame(animationFrame)
-    animationFrame = null
-  }
-}
-
-function formatTime(ms: number) {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  const remainingMs = Math.floor(ms % 1000)
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}.${remainingMs.toString().padStart(3, '0')}`
-}
 //#endregion
 
-//#region 关键帧处理逻辑
-// 处理 Delete 键删除选中的关键帧
-function handleKeyDown(e: KeyboardEvent) {
-  // 如果焦点在输入框等元素上，不处理
-  if (
-    e.target instanceof HTMLInputElement ||
-    e.target instanceof HTMLTextAreaElement ||
-    (e.target as HTMLElement).isContentEditable
-  ) {
-    return
-  }
-
-  // Delete 或 Backspace 键删除选中的关键帧
-  // 如果有关键帧被选中，优先删除关键帧，并阻止事件传播到全局处理（避免删除元素）
-  if ((e.key === 'Delete' || e.key === 'Backspace') && animationStore.selectedKeyframe) {
-    e.preventDefault()
-    e.stopPropagation() // 阻止事件传播，避免触发全局的删除元素功能
-    const { property, keyframeIndex } = animationStore.selectedKeyframe
-    handleRemoveKeyframe(property, keyframeIndex)
-    return
-  }
-}
-
-function handleAddKeyframe(property: string, time: number, value: number | string) {
-  // 如果 value 为 0 或未提供，尝试从选中元素获取当前值
-  let keyframeValue = value
-  if (value === 0 || value === undefined || value === null) {
-    const selectedElement = elementStore.selectedElements[0]
-    if (selectedElement) {
-      // 尝试从 style 中获取属性值
-      const styleValue = selectedElement.style[property]
-      if (styleValue !== undefined && styleValue !== null && styleValue !== '') {
-        // 如果是数字字符串，转换为数字
-        const numValue = parseFloat(String(styleValue))
-        if (!isNaN(numValue)) {
-          keyframeValue = numValue
-        } else {
-          keyframeValue = styleValue
-        }
-      } else {
-        // 如果没有值，使用默认值
-        keyframeValue = 0
-      }
-    }
-  }
-
-  // 确保 track 存在
-  if (!animationStore.tracks.find(t => t.property === property)) {
-    animationStore.addTrack(property)
-  }
-
-  animationStore.addKeyframe(property, {
-    time: time / duration.value,
-    value: keyframeValue
-  })
-}
-
-function handleRemoveKeyframe(property: string, index: number) {
-  animationStore.removeKeyframe(property, index)
-  // 如果删除的是选中的关键帧，清除选中状态
-  if (
-    animationStore.selectedKeyframe &&
-    animationStore.selectedKeyframe.property === property &&
-    animationStore.selectedKeyframe.keyframeIndex === index
-  ) {
-    animationStore.clearSelectedKeyframe()
-  }
-}
-
-function handleUpdateKeyframeTime(property: string, index: number, time: number) {
-  animationStore.updateKeyframe(property, index, { time })
-}
-
-function handleSelectKeyframe(_property: string, _index: number) {
-  // 选中关键帧（已在 TimelineTrack 中设置，这里可以添加额外逻辑）
-}
-
-function handleEditKeyframeValue(property: string, index: number) {
-  const track = animationStore.tracks.find(t => t.property === property)
-  if (!track || index < 0 || index >= track.keyframes.length) return
-
-  // 设置选中的关键帧（用于属性面板显示）
-  animationStore.setSelectedKeyframe(property, index)
-
-  const keyframe = track.keyframes[index]
-  editingKeyframe.value = {
-    property,
-    index,
-    value: keyframe.value
-  }
-  showKeyframeEditDialog.value = true
-}
-
-function handleAddKeyframeFromChannel(property: string, time: number) {
-  handleAddKeyframe(property, time, 0)
-}
-//#endregion
-
-//#region 通道处理
-const message = useMessage()
-// 可用的CSS属性列表
+//#region 节点通道
+const isShowAddChannelModal = ref(false)
+const selectedProperty = ref<string | null>(null)
 const availableProperties = computed(() => {
-  // 将 SUPPORTED_CSS_PROPERTIES 转换为 n-select 所需的格式
   const properties = SUPPORTED_CSS_PROPERTIES.map((group, groupIndex) => ({
     label: group.label,
     type: 'group',
     key: `group-${groupIndex}-${group.props}`,
     children: group.children
-      .filter(prop => !tracks.value.find(t => t.property === prop.props))
+      .filter(prop => {
+        // 过滤掉已经存在通道的属性
+        const existingTrack = animationStore.tracks.find(t => t.property === prop.props)
+        return !existingTrack
+      })
       .map((prop, propIndex) => ({
         label: prop.label + ` (${prop.props})`,
         value: prop.props,
@@ -664,49 +197,25 @@ const availableProperties = computed(() => {
   return properties
 })
 
-function handleAddChannel() {
-  if (!selectedProperty.value) {
-    message.warning('请选择一个CSS属性')
-    return false
-  }
-
-  if (!animationStore.selectedElementId) {
+function showAddChannel() {
+  if (!elementStore.hasSelection) {
     message.warning('请先选择一个元素')
-    return false
+    return
   }
+  isShowAddChannelModal.value = true
+}
 
-  animationStore.addTrack(selectedProperty.value)
+function addChannel() {
+  if (!selectedProperty.value) {
+    message.warning('请选择一个属性')
+    return
+  }
+  animationStore.addTrack(selectedProperty.value!)
   selectedProperty.value = null
-  showAddChannelDialog.value = false
-  message.success('通道已添加')
-  return true
 }
 //#endregion
 
-//#region 对话框处理
-function handleSaveKeyframeValue() {
-  if (!editingKeyframe.value) return false
-
-  const { property, index, value } = editingKeyframe.value
-  animationStore.updateKeyframe(property, index, { value })
-  // 保持关键帧选中状态，以便在属性面板中继续编辑
-  animationStore.setSelectedKeyframe(property, index)
-  editingKeyframe.value = null
-  showKeyframeEditDialog.value = false
-  return true
-}
-
-// 监听对话框关闭，清除选中状态（如果对话框被取消）
-watch(showKeyframeEditDialog, isOpen => {
-  if (!isOpen && editingKeyframe.value === null) {
-    // 对话框关闭且没有编辑中的关键帧，清除选中状态
-    animationStore.clearSelectedKeyframe()
-  }
-})
-
-function getPropertyLabel(property: string): string {
-  return getCSSPropertyByProps(property)?.label || property
-}
+//#region 时间轴网格和标尺
 //#endregion
 </script>
 
@@ -716,241 +225,76 @@ function getPropertyLabel(property: string): string {
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  background-color: var(--bg-color-secondary);
 }
 
-.timeline-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
+.timeline-head {
+  padding: 8px 16px;
+  background-color: var(--bg-color-primary);
+  border-bottom: 1px solid var(--border-color);
+  gap: 16px;
 }
 
-/* 左侧（20%）：顶部控制按钮 + 通道列表 */
-.timeline-left {
-  width: 20%;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  border-right: 2px solid var(--color-border);
-  background: var(--color-bg-secondary);
-  overflow: hidden;
-  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-  position: relative;
-}
-
-.timeline-left-header {
-  padding: 8px 12px;
-  border-bottom: 2px solid var(--color-border);
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  background: var(--n-color);
-  height: 38px;
-  min-height: 38px;
-  box-sizing: border-box;
+.timeline-controls-left {
+  gap: 12px;
 }
 
 .playback-controls {
-  display: flex;
   gap: 4px;
-  align-items: center;
-  flex-shrink: 0;
+  padding: 4px;
+  background-color: var(--bg-color-secondary);
+  border-radius: 4px;
 
   :deep(.n-button) {
-    margin: 2px 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
   }
 }
 
-.timeline-info {
-  font-size: 11px;
-  color: var(--n-textColor2);
+.loop-mode-select {
+  width: 180px;
+}
+
+.timeline-controls-right {
+  gap: 16px;
+}
+
+.control-item {
+  gap: 8px;
+}
+
+.control-label {
+  font-size: 13px;
+  color: var(--text-color-secondary);
   white-space: nowrap;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
-.timeline-settings {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-  font-size: 11px;
-  flex: 1;
-  justify-content: flex-end;
-  min-width: 0;
+.control-input {
+  width: 80px;
 
-  :deep(.n-button) {
-    margin: 2px 0;
+  :deep(.n-input-number) {
+    width: 100%;
   }
 }
 
-.auto-keyframe-switch {
-  display: flex;
-  align-items: center;
-}
-
-/* 右侧（80%）：时间轴标尺 + 时间刻度网格 */
-.timeline-right {
+.timeline-bottom {
   flex: 1;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
-  min-width: 0;
-  background: var(--n-color);
+  border-top: 1px solid var(--color-border);
 }
 
-.timeline-ruler-wrapper {
-  height: 38px;
-  min-height: 38px;
-  border-bottom: 1px solid var(--color-border);
+.channels {
+  width: 300px;
   flex-shrink: 0;
-  overflow: visible;
-  position: relative;
-  background: var(--n-color);
-  border-left: 2px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.timeline-ruler-box {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  z-index: 2;
-  overflow: visible;
-}
-
-.timeline-time-grid {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.time-grid-tick {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  display: flex;
-  align-items: flex-end;
-
-  &.time-grid-tick-major {
-    .time-grid-line {
-      height: 100%;
-      background: var(--color-border);
-      opacity: 0.4;
-    }
-  }
-
-  &:not(.time-grid-tick-major) {
-    .time-grid-line {
-      height: 50%;
-      background: var(--color-border);
-      opacity: 0.2;
-    }
-  }
-}
-
-.time-grid-line {
-  width: 1px;
-}
-
-.timeline-tracks-wrapper {
-  flex: 1;
-  position: relative;
-  overflow: auto;
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
   @include custom-scrollbar;
-  background: var(--n-color);
 }
 
-.timeline-tracks {
-  position: relative;
-  min-height: 100%;
-  z-index: 2;
+.tracks-container {
+  flex: 1;
+  overflow: hidden;
 }
-
-.timeline-playhead {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--color-primary);
-  pointer-events: auto;
-  z-index: 20;
-  box-shadow: 0 0 4px rgba(24, 160, 88, 0.5);
-  cursor: ew-resize;
-  transition:
-    width 0.1s,
-    background 0.1s;
-
-  &:hover {
-    width: 3px;
-    background: #36ad6a;
-    box-shadow: 0 0 6px rgba(24, 160, 88, 0.7);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 8px solid var(--color-primary);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    cursor: grab;
-  }
-
-  &:hover::before {
-    border-top-color: #36ad6a;
-  }
-
-  &:active {
-    cursor: grabbing;
-
-    &::before {
-      cursor: grabbing;
-      transform: translateX(-50%) scale(1.1);
-    }
-  }
-}
-
-.timeline-playhead-ruler {
-  z-index: 10;
-}
-
-.timeline-playhead-grid {
-  z-index: 20;
-}
-
-/* 拖拽中的样式 */
-.playhead-dragging {
-  user-select: none;
-
-  .timeline-playhead {
-    width: 3px;
-    background: #36ad6a;
-    box-shadow: 0 0 8px rgba(24, 160, 88, 0.8);
-
-    &::before {
-      transform: translateX(-50%) scale(1.1);
-      border-top-color: #36ad6a;
-    }
-  }
-}
-
-/* 确保左右两侧顶部高度对齐 */
 </style>

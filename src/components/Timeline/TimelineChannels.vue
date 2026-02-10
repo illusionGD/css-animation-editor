@@ -1,48 +1,34 @@
 <template>
-  <div class="timeline-channels">
-    <div class="channels-list">
-      <div
-        v-for="track in tracks"
-        :key="track.property"
-        class="channel-item"
-        :class="{ active: selectedChannel === track.property }"
-        @click="selectChannel(track.property)"
-      >
-        <div class="channel-label">
-          <span class="channel-name">{{ getPropertyLabel(track.property) }}</span>
+  <div class="timeline-channels flex-center flex-column">
+    <div v-if="animationStore.tracks.length" class="channel-list">
+      <div v-for="(track, index) in animationStore.tracks" :key="index" class="channel-item">
+        <!-- 左侧：CSS属性名称 -->
+        <div class="channel-label" @click="selectChannel(track.property)">
+          <span class="channel-name">{{ getCSSPropertyByProps(track.property)?.label }}</span>
         </div>
+
+        <!-- 右侧：操作按钮 -->
         <div class="channel-actions">
+          <!-- K帧按钮 -->
           <button
             class="keyframe-btn"
             :class="{ active: hasKeyframeAtCurrentTime(track) }"
-            title="添加/删除关键帧"
             @click.stop="toggleKeyframe(track.property)"
+            title="添加/删除关键帧"
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6 0L11.1962 3V9L6 12L0.803848 9V3L6 0Z"
-                :fill="hasKeyframeAtCurrentTime(track) ? 'var(--color-primary)' : 'currentColor'"
-              />
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 2L14 8L8 14L2 8Z" />
             </svg>
           </button>
-          <button class="remove-btn" title="删除通道" @click.stop="removeChannel(track.property)">
-            <n-icon><CloseIcon /></n-icon>
+
+          <!-- 删除通道按钮 -->
+          <button class="remove-btn" @click.stop="removeChannel(track.property)" title="删除通道">
+            <n-icon :component="Close" />
           </button>
         </div>
       </div>
-      <n-empty
-        v-if="tracks.length === 0"
-        description="请先选择一个元素，然后添加通道"
-        size="small"
-        style="padding: 20px"
-      />
     </div>
+    <n-empty v-else description="暂无动画通道" />
   </div>
 </template>
 
@@ -51,103 +37,51 @@ import { ref, computed } from 'vue'
 import { NIcon, NEmpty } from 'naive-ui'
 import { Close } from '@vicons/ionicons5'
 import { useAnimationStore } from '@/stores/animationStore'
-import type { AnimationTrack } from '@/types'
+import type { AnimationTrack, ElementType } from '@/types'
 import { getCSSPropertyByProps } from '@/constants'
+import { useElementStore } from '@/stores/elementStore'
 
-const CloseIcon = Close
-
-interface Props {
-  tracks: AnimationTrack[]
-  currentTime: number
-  duration: number
-}
-
-const props = defineProps<Props>()
+const animationStore = useAnimationStore()
 const emit = defineEmits<{
   'add-keyframe': [property: string, time: number]
 }>()
 
-const animationStore = useAnimationStore()
+function getPropertyLabel(property: string) {}
 
-const tracks = computed(() => props.tracks)
-const currentTime = computed(() => props.currentTime)
-const duration = computed(() => props.duration)
-const selectedChannel = ref<string | null>(null)
+function selectChannel(property: string) {}
 
-function getPropertyLabel(property: string): string {
-  return getCSSPropertyByProps(property)?.label || property
-}
+function hasKeyframeAtCurrentTime(track: AnimationTrack) {}
 
-function selectChannel(property: string) {
-  selectedChannel.value = property
-}
-
-function hasKeyframeAtCurrentTime(track: AnimationTrack): boolean {
-  const currentProgress = duration.value > 0 ? currentTime.value / duration.value : 0
-  const tolerance = 0.01 // 容差范围
-  return track.keyframes.some(kf => Math.abs(kf.time - currentProgress) < tolerance)
-}
-
-function toggleKeyframe(property: string) {
-  const currentProgress = duration.value > 0 ? currentTime.value / duration.value : 0
-  const track = tracks.value.find((t: AnimationTrack) => t.property === property)
-  if (!track) return
-
-  // 检查当前时间是否有关键帧
-  const existingIndex = track.keyframes.findIndex(
-    (kf: { time: number }) => Math.abs(kf.time - currentProgress) < 0.01
-  )
-
-  if (existingIndex >= 0) {
-    // 删除关键帧
-    animationStore.removeKeyframe(property, existingIndex)
-  } else {
-    // 添加关键帧
-    emit('add-keyframe', property, currentTime.value)
-  }
-}
+function toggleKeyframe(property: string) {}
 
 function removeChannel(property: string) {
   animationStore.removeTrack(property)
-  if (selectedChannel.value === property) {
-    selectedChannel.value = null
-  }
 }
 </script>
 
 <style lang="scss" scoped>
 .timeline-channels {
-  flex: 1;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
   background: var(--n-color);
+  .channel-list {
+      width: 100%;
+      height: 100%;
+  }
 }
 
-.channels-list {
-  flex: 1;
-  overflow-y: auto;
-  @include custom-scrollbar;
-}
 
 .channel-item {
   display: flex;
+  padding: 10px 20px;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
-  //   border-top: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color 0.2s;
 
   &:first-child {
     border-top: none;
   }
-
-  //   &:last-child {
-  //     border-bottom: none;
-  //   }
 
   &:hover {
     background: var(--n-colorHover);
@@ -179,29 +113,33 @@ function removeChannel(property: string) {
 }
 
 .keyframe-btn {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  background: transparent;
+  background: var(--bg-color-primary);
+  border-radius: 3px;
   cursor: pointer;
-  color: var(--n-textColor2);
-  transition: color 0.2s;
+  color: var(--text-color-secondary);
+  transition: all 0.2s;
   padding: 0;
 
   &:hover {
-    color: var(--n-textColor);
+    color: var(--text-color-primary);
+    border-color: var(--color-primary);
   }
 
   &.active {
     color: var(--color-primary);
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
   }
 
   svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 }
 

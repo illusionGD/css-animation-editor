@@ -2,23 +2,13 @@
   <div class="property-panel">
     <div class="property-panel-header">
       <h3>属性面板</h3>
-      <n-text
-        v-if="hasSelection && selectedElement"
-        depth="3"
-        class="element-name"
-      >
+      <n-text v-if="hasSelection && selectedElement" depth="3" class="element-name">
         {{ selectedElement.name || selectedElement.id }}
       </n-text>
     </div>
     <div class="property-panel-content">
-      <n-empty
-        v-if="!hasSelection"
-        description="请选择一个元素"
-      />
-      <div
-        v-else
-        class="property-groups"
-      >
+      <n-empty v-if="!hasSelection" description="请选择一个元素" />
+      <div v-else class="property-groups">
         <PropertyGroup
           v-for="group in propertyGroups"
           :key="group.name"
@@ -39,28 +29,17 @@ import { useElementStore } from '@/stores/elementStore'
 import { useAnimationStore } from '@/stores/animationStore'
 import PropertyGroup from './PropertyGroup.vue'
 import { interpolateKeyframes } from '@/utils/calculators'
-import type { CanvasElement, CSSProperty } from '@/types'
+import type { CSSProperty } from '@/types'
 import { SUPPORTED_CSS_PROPERTIES } from '@/constants/element'
+import { useCanvasStore } from '@/stores/canvasStore'
 
 const elementStore = useElementStore()
 const animationStore = useAnimationStore()
+const canvasStore = useCanvasStore()
 
 // 从 elementStore 获取选中元素
 const hasSelection = computed(() => elementStore.hasSelection)
 const selectedElement = computed(() => elementStore.firstSelectedElement)
-
-// 当选中元素变化时，同步设置到 animationStore
-watch(
-  selectedElement,
-  element => {
-    if (element) {
-      animationStore.setSelectedElement(element.id)
-    } else {
-      animationStore.setSelectedElement(null)
-    }
-  },
-  { immediate: true }
-)
 
 // 获取当前选中元素的动画轨道（从 elementStore 获取）
 const tracks = computed(() => {
@@ -174,88 +153,17 @@ const propertyGroups = computed(() => {
 function handleUpdate(property: string, value: any) {
   if (!selectedElement.value) return
 
-  // 如果有选中的关键帧，更新关键帧的值
-  if (animationStore.selectedKeyframe) {
-    const { property: selectedProperty, keyframeIndex } = animationStore.selectedKeyframe
-    if (selectedProperty === property) {
-      animationStore.updateKeyframe(property, keyframeIndex, { value })
-      return
-    }
-  }
-
   // 如果没有选中关键帧，更新元素的属性
   const element = selectedElement.value
-  const updates: Partial<CanvasElement> = {}
-
-  // 处理 width/height - 只更新 style
-  if (property === 'width' || property === 'height') {
-    const numValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0
-    updates.style = {
-      ...element.style,
-      [property]: `${numValue}px`
-    }
-  }
-  // 处理 transform 属性 - 转换为 CSS transform
-  else if (
-    ['translateX', 'translateY', 'scaleX', 'scaleY', 'rotate', 'skewX', 'skewY'].includes(property)
-  ) {
-    const transformParts: string[] = []
-    const transformMap: Record<string, string> = {
-      translateX: 'translateX',
-      translateY: 'translateY',
-      scaleX: 'scaleX',
-      scaleY: 'scaleY',
-      rotate: 'rotate',
-      skewX: 'skewX',
-      skewY: 'skewY'
-    }
-
-    // 获取所有 transform 属性的值
-    const transformProps = [
-      'translateX',
-      'translateY',
-      'scaleX',
-      'scaleY',
-      'rotate',
-      'skewX',
-      'skewY'
-    ]
-    transformProps.forEach(prop => {
-      let propValue = prop === property ? value : element.style[prop]
-
-      if (propValue !== undefined && propValue !== null && propValue !== '') {
-        const numValue =
-          typeof propValue === 'number' ? propValue : parseFloat(String(propValue)) || 0
-        const unit =
-          prop === 'rotate' || prop === 'skewX' || prop === 'skewY'
-            ? 'deg'
-            : prop === 'scaleX' || prop === 'scaleY'
-              ? ''
-              : 'px'
-        transformParts.push(`${transformMap[prop]}(${numValue}${unit})`)
-      }
-    })
-
-    // 构建 transform 字符串
-    const transformValue = transformParts.length > 0 ? transformParts.join(' ') : 'none'
-
-    // 更新 style，保留 transform 属性用于编辑，同时设置 CSS transform
-    const newStyle = { ...element.style }
-    newStyle[property] = value
-    newStyle.transform = transformValue
-
-    updates.style = newStyle
-  }
-  // 处理其他样式属性
-  else {
-    updates.style = {
-      ...element.style,
-      [property]: value
-    }
+  const styles = {
+    [property]: value
   }
 
   // 使用 elementStore 更新元素
-  elementStore.updateElement(element.id, updates)
+  elementStore.updateElementStyle(element.id, styles)
+
+  // 更新canvas
+  canvasStore.updateElementStyle(element.id, styles)
 }
 </script>
 

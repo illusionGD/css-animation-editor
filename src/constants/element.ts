@@ -41,8 +41,6 @@ export const SUPPORTED_CSS_PROPERTIES: CSSPropertyGroup[] = [
       { props: 'translateZ', label: 'Z轴位移', type: 'number', unit: 'px', defaultValue: 0 },
       { props: 'scaleX', label: 'X轴缩放', type: 'number', unit: '', defaultValue: 1 },
       { props: 'scaleY', label: 'Y轴缩放', type: 'number', unit: '', defaultValue: 1 },
-      { props: 'scale', label: '整体缩放', type: 'number', unit: '', defaultValue: 1 },
-      { props: 'rotate', label: '旋转', type: 'number', unit: 'deg', defaultValue: 0 },
       { props: 'rotateX', label: 'X轴旋转', type: 'number', unit: 'deg', defaultValue: 0 },
       { props: 'rotateY', label: 'Y轴旋转', type: 'number', unit: 'deg', defaultValue: 0 },
       { props: 'rotateZ', label: 'Z轴旋转', type: 'number', unit: 'deg', defaultValue: 0 },
@@ -66,8 +64,6 @@ export const SUPPORTED_CSS_PROPERTIES: CSSPropertyGroup[] = [
     children: [
       { props: 'left', label: '左边距', type: 'number', unit: 'px', defaultValue: 0 },
       { props: 'top', label: '上边距', type: 'number', unit: 'px', defaultValue: 0 },
-      { props: 'right', label: '右边距', type: 'number', unit: 'px', defaultValue: 0 },
-      { props: 'bottom', label: '下边距', type: 'number', unit: 'px', defaultValue: 0 }
     ]
   },
   {
@@ -101,8 +97,7 @@ export const SUPPORTED_CSS_PROPERTIES: CSSPropertyGroup[] = [
     props: 'border',
     mergeable: false,
     children: [
-      { props: 'borderRadius', label: '圆角', type: 'number', unit: 'px', defaultValue: 0 },
-      { props: 'borderWidth', label: '边框宽度', type: 'number', unit: 'px', defaultValue: 0 },
+      { props: 'borderWidth', label: '边框宽度', type: 'number', unit: 'px', defaultValue: 1 },
       { props: 'borderTopLeftRadius', label: '左上圆角', type: 'number', unit: 'px', defaultValue: 0 },
       { props: 'borderTopRightRadius', label: '右上圆角', type: 'number', unit: 'px', defaultValue: 0 },
       { props: 'borderBottomLeftRadius', label: '左下圆角', type: 'number', unit: 'px', defaultValue: 0 },

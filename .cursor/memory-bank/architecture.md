@@ -1,322 +1,88 @@
-# 项目架构说明
+# CSS 动画编辑器 - 架构概览
 
-## 项目结构
+## 1. 项目概况
+本项目是一个基于 **Vue 3** 和 **TypeScript** 构建的 Web 端 **CSS 动画编辑器**。它提供了一个可视化的界面，用于创建、编辑和导出 CSS 动画，类似于 Flash 或 Adobe Edge Animate 等工具，但专注于现代 Web 标准。
 
+### 技术栈
+- **框架**: Vue 3 (Script Setup, Composition API)
+- **构建工具**: Vite
+- **状态管理**: Pinia
+- **UI 库**: Naive UI
+- **图标**: Ionicons 5 (via @vicons)
+- **样式**: SCSS
+- **核心依赖**:
+  - `bezier-easing`: 用于贝塞尔曲线的可视化和计算。
+  - `monaco-editor`: 用于代码预览/编辑。
+  - `@vueuse/core`: 用于通用的组合式函数（键盘交互等）。
+
+## 2. 高层架构
+应用程序遵循 **组件 (Component) - 状态 (Store) - 服务 (Service)** 架构：
+- **Components (`src/components/`)**: 纯 UI 层。渲染 store 中的状态并发出用户交互事件。
+- **Stores (`src/stores/`)**: 核心业务逻辑和事实来源。处理数据操作、选中状态和历史记录（撤销/重做）。
+- **Services (`src/services/`)**: 基础设施层，主要处理数据持久化（存储适配器）。
+- **Utils (`src/utils/`)**: 纯函数助手，用于复杂计算、格式化和文件生成（导出）。
+
+## 3. 核心模块与目录结构
+
+### 3.1 视图与组件 (Views & Components)
+UI 分为四个主要区域（配置在 `src/components/ResizableLayout` 中）：
+1.  **左侧边栏 (`src/components/LeftSidebar/`)**:
+    -   `NodeTree`: 管理元素层级（DOM 树结构）。
+    -   `PresetPanel`: 预定义元素/动画的库。
+2.  **画布 (`src/components/Canvas/`)**:
+    -   主要的视觉工作区。
+    -   处理元素渲染、选框覆盖、参考线和拖放操作。
+3.  **属性面板 (`src/components/PropertyPanel/`)**:
+    -   上下文敏感的编辑器。
+    -   显示当前选中元素（位置、大小、颜色等）或动画关键帧的属性。
+4.  **时间轴 (`src/components/Timeline/`)**:
+    -   动画序列器。
+    -   包含 `TimelineTracks`（关键帧显示）、`TimelineGrid` 和播放控件。
+
+### 3.2 状态管理 (Pinia Stores)
+状态根据关注点分离进行归一化：
+-   **`elementStore.ts`**: "场景"。存储元素列表、样式和层级。
+-   **`animationStore.ts`**: "时间"。存储轨道、关键帧、播放头位置和播放状态。
+-   **`canvasStore.ts`**: "视口"。缩放级别、平移偏移、标尺可用性、吸附设置。
+-   **`historyStore.ts`**: "时光机"。管理标准的撤销/重做栈。
+-   **`nodeTreeStore.ts`**: 树视图状态助手（展开的节点等）。
+-   **`presetStore.ts`**: 管理可复用的动画/元素模板。
+
+### 3.3 数据流 (Data Flow)
+1.  **输入 (Input)**: 用户与 **Components** 交互（例如，在画布上拖动对象）。
+2.  **动作 (Action)**: 组件调用 **Stores** 中的 Action（例如，`elementStore.updateElement`）。
+3.  **状态变更 (State Change)**: Store 更新响应式状态。
+4.  **副作用 (Effect)**:
+    -   **Canvas** 重新渲染元素。
+    -   **PropertyPanel** 更新显示的值。
+    -   **Timeline** 更新关键帧标记（如果是自动关键帧模式）。
+    -   **HistoryStore** 捕获快照（防抖）。
+
+### 3.4 关键子系统 (Key Subsystems)
+
+#### 坐标系统
+-   在 `utils/calculators.ts` 和 `canvasStore` 中管理。
+-   处理屏幕空间（Screen Space，鼠标事件）和画布空间（Canvas Space，CSS 值）之间的转换。
+
+#### 导出系统 (`src/utils/exporters/`)
+-   **CSS Exporter**: 将内部动画状态编译为标准的 `@keyframes` 和类定义。
+-   **HTML Exporter**: 将 CSS 和 HTML 结构包装成独立文件。
+-   **JSON Exporter**: 序列化整个项目状态用于保存/加载。
+
+## 4. 文件结构
 ```
-css-animation-editor/
-├── src/
-│   ├── components/          # 组件
-│   │   ├── Canvas/          # 画布模块
-│   │   ├── PropertyPanel/   # 右侧属性面板
-│   │   ├── Timeline/        # 底部时间轴
-│   │   ├── LeftSidebar/     # 左侧侧边栏容器
-│   │   │   ├── NodeTree/    # 节点树面板
-│   │   │   └── PresetPanel/ # 预设面板
-│   │   ├── Header/          # 顶部Banner
-│   │   └── ResizableLayout/ # 可调整布局
-│   ├── stores/              # Pinia状态管理
-│   ├── types/               # TypeScript类型定义
-│   ├── utils/               # 工具函数
-│   ├── schemas/             # 预设Schema定义
-│   ├── composables/         # Vue组合式函数
-│   └── App.vue
-├── .cursorrules             # AI规则文件
-├── .cursor/                 # Cursor配置
-│   └── memory-bank/         # Memory bank文件
-└── package.json
+src/
+├── components/          # 按 UI 区域排列的 Vue 组件
+│   ├── Canvas/          # 编辑舞台
+│   ├── Header/          # 工具栏和菜单
+│   ├── Timeline/        # 动画序列器
+│   └── ...
+├── composables/         # 共享逻辑（例如，键盘快捷键）
+├── constants/           # 配置常量（颜色，默认值）
+├── schemas/             # 数据验证模式
+├── services/            # 存储和外部 IO
+├── stores/              # Pinia 状态定义
+├── types/               # TypeScript 接口
+└── utils/               # 助手函数
+    └── exporters/       # 输出生成逻辑
 ```
-
-## 当前开发状态（2024年更新）
-
-### 已完成模块
-- ✅ **Element Store**：核心数据源，完整实现
-- ✅ **Animation Store**：业务逻辑层，完整实现
-- ✅ **节点树系统**：基本完成（90%）
-- ✅ **属性面板**：基本完成（80%），数据联动待完善
-- ✅ **项目管理系统**：完整实现
-- ✅ **导出功能**：CSS、HTML、JSON 导出完整实现
-
-### 需要重构模块
-- ⚠️ **画布模块**：需要从 Canvas 迁移到 HTML 结构，更符合 CSS 动画效果
-
-### 未完成模块
-- ❌ **时间轴模块**：仅 UI 框架，核心功能未实现（K序列帧、缩放滚动、分通道、时间刻度等）
-- ❌ **预设库**：仅静态数据，导入/导出、预览等功能未完善
-
-## 核心模块职责
-
-### Element Store (`src/stores/elementStore.ts`) - **核心数据源**
-
-**职责**:
-- **统一管理所有元素的增删改查**（单一数据源 Single Source of Truth）
-- 使用 `Map<string, CanvasElement>` 存储，提高查找性能（O(1)）
-- 管理选中状态（selectedElementIds）
-- 提供选中元素数组（selectedElements）
-
-**关键状态**:
-- `elements: Map<string, CanvasElement>` - 元素数据（Map 形式，内部使用）
-- `selectedElementIds: string[]` - 选中元素 ID 数组
-
-**关键计算属性**:
-- `elementsArray: CanvasElement[]` - 所有元素数组（供其他模块使用）
-- `selectedElements: CanvasElement[]` - **选中元素数组（核心方法）**
-- `hasSelection: boolean` - 是否有选中
-- `firstSelectedElement: CanvasElement | undefined` - 第一个选中元素
-- `elementCount: number` - 元素总数
-
-**关键方法**:
-- `createElement(data): string` - 创建元素，返回 ID
-- `getElement(id): CanvasElement | undefined` - 获取单个元素
-- `getElements(): CanvasElement[]` - 获取所有元素
-- `updateElement(id, updates): void` - 更新元素
-- `deleteElement(id): void` - 删除元素（自动取消选中）
-- `hasElement(id): boolean` - 检查元素是否存在
-- `getElementsByIds(ids): CanvasElement[]` - 批量获取元素
-- `deleteElements(ids): void` - 批量删除元素
-- `clearAll(): void` - 清空所有元素
-- `selectElement(ids: string | string[], multi?): void` - 选中元素（支持单个或数组，支持追加模式）
-- `deselectElement(ids: string | string[]): void` - 取消选中（支持单个或数组）
-- `clearSelection(): void` - 清空选中
-- `toggleSelection(ids: string | string[]): void` - 切换选中状态
-- `isSelected(id): boolean` - 检查是否选中
-
-**设计优势**:
-- 单一数据源，避免数据不一致
-- Map 存储，查找性能 O(1)
-- 支持单个或批量操作
-- 完整的 TypeScript 类型支持
-- 响应式计算属性，自动更新
-
-### Canvas Store (`src/stores/canvasStore.ts`)
-
-**职责**:
-- 管理画布配置（缩放、偏移、网格等）
-- **从 elementStore 获取元素数据**（通过计算属性代理）
-- **保持向后兼容的 API**（代理方法，避免大规模重构）
-
-**关键状态**:
-- `canvasConfig` - 画布配置（宽度、高度、缩放、偏移、网格、标尺等）
-
-**计算属性（代理到 elementStore）**:
-- `elements` - 从 `elementStore.elementsArray` 获取
-- `selectedElementIds` - 从 `elementStore.selectedElementIds` 获取
-- `selectedElements` - 从 `elementStore.selectedElements` 获取
-- `hasSelection` - 从 `elementStore.hasSelection` 获取
-
-**关键方法**:
-- `updateCanvasConfig(config)` - 更新画布配置
-- `addElement()`, `removeElement()`, `updateElement()`, `selectElement()` - 代理到 elementStore（保持向后兼容）
-
-### Animation Store (`src/stores/animationStore.ts`)
-
-**职责**:
-- **管理动画业务逻辑**（播放控制、关键帧操作）
-- **不存储数据**，数据存储在 `elementStore` 中（tracks 存在元素的 `tracks` 字段）
-- 管理动画播放状态（isPlaying, currentTime）
-- 管理动画时长（duration）
-- 管理选中关键帧状态（selectedKeyframe）
-
-**关键状态**:
-- `selectedElementId: string | null` - 当前编辑的元素ID
-- `selectedKeyframe: { property: string; keyframeIndex: number } | null` - 选中的关键帧
-- `isPlaying: boolean` - 是否正在播放
-- `currentTime: number` - 当前播放时间（毫秒）
-- `duration: number` - 动画时长（毫秒）
-
-**关键计算属性**:
-- `tracks: AnimationTrack[]` - 当前选中元素的 tracks（从 elementStore 获取）
-- `currentProgress: number` - 当前播放进度（0-1）
-
-**关键方法**（所有方法通过 elementStore 更新数据）:
-- `setSelectedElement(elementId)` - 设置当前编辑的元素
-- `addTrack(property)` - 添加动画轨道（通过 elementStore.updateElement 更新）
-- `removeTrack(property)` - 删除动画轨道（通过 elementStore.updateElement 更新）
-- `addKeyframe(property, keyframe)` - 添加关键帧（通过 elementStore.updateElement 更新）
-- `removeKeyframe(property, keyframeIndex)` - 删除关键帧（通过 elementStore.updateElement 更新）
-- `updateKeyframe(property, keyframeIndex, updates)` - 更新关键帧（通过 elementStore.updateElement 更新）
-- `updateTrackDuration(property, newDuration)` - 更新轨道时长（通过 elementStore.updateElement 更新）
-- `setSelectedKeyframe(property, keyframeIndex)` - 设置选中的关键帧
-- `clearSelectedKeyframe()` - 清除选中的关键帧
-- `play()`, `pause()`, `stop()`, `seek(time)` - 播放控制
-- `getElementTracks(elementId)` - 获取指定元素的 tracks（从 elementStore 获取）
-
-**设计原则**:
-- **业务逻辑层**：只负责动画相关的业务逻辑，不存储数据
-- **数据存储**：所有元素数据（包括 tracks）存储在 `elementStore` 中
-- **数据访问**：通过 `elementStore.getElement()` 和 `elementStore.updateElement()` 操作数据
-
-### UI Store (`src/stores/uiStore.ts`)
-
-**职责**:
-- 管理主题（亮色/暗色）
-- 管理布局尺寸（侧边栏宽度、时间轴高度）
-- 管理设置（导出格式、默认时长等）
-- 管理自动K帧开关（autoKeyframe）
-
-**关键状态**:
-- `isDarkMode: boolean` - 是否暗色模式
-- `leftSidebarWidth: number` - 左侧栏宽度
-- `rightSidebarWidth: number` - 右侧栏宽度
-- `timelineHeight: number` - 时间轴高度
-- `leftSidebarTab: 'nodeTree' | 'presets'` - 左侧栏当前标签页
-- `settings` - 全局设置
-- `autoKeyframe: boolean` - 自动K帧开关
-
-**关键方法**:
-- `toggleTheme()` - 切换主题
-- `setLeftSidebarWidth(width)` - 设置左侧栏宽度
-- `setRightSidebarWidth(width)` - 设置右侧栏宽度
-- `setTimelineHeight(height)` - 设置时间轴高度
-- `toggleAutoKeyframe()` - 切换自动K帧
-
-### NodeTree Store (`src/stores/nodeTreeStore.ts`)
-
-**职责**:
-- 管理节点树结构（nodes）
-- 管理节点展开/折叠状态
-- **从 elementStore 获取元素数据并构建树形结构**
-
-**关键状态**:
-- `nodes: TreeNode[]` - 节点树结构
-- `selectedNodeId: string | null` - 选中的节点ID
-- `expandedNodeIds: Set<string>` - 展开的节点ID集合
-
-**关键方法**:
-- `buildTreeFromElements()` - 从 elementStore 获取元素并构建树
-- `selectNode(nodeId)` - 选中节点（同步到 elementStore）
-- `findNodeById(id)` - 查找节点
-- `toggleExpand(nodeId)` - 切换节点展开/折叠
-- `syncWithCanvas()` - 同步元素变化
-
-### Preset Store (`src/stores/presetStore.ts`)
-
-**职责**:
-- 管理动画预设列表
-- 管理预设搜索和分类
-- 预设的增删改查
-
-**关键方法**:
-- `loadPresets()` - 加载预设列表
-- `savePreset(preset)` - 保存预设
-- `deletePreset(presetId)` - 删除预设
-- `setSearchQuery(query)` - 设置搜索关键词
-- `setSelectedCategory(category)` - 设置选中分类
-
-### Project Store (`src/stores/projectStore.ts`)
-
-**职责**:
-- 管理项目列表
-- 项目的保存/加载
-- **使用 elementStore 恢复元素数据**
-
-**关键方法**:
-- `saveProject()` - 保存项目（从 elementStore 获取元素数据）
-- `loadProject(projectId)` - 加载项目（使用 elementStore 恢复元素）
-- `deleteProject(projectId)` - 删除项目
-- `listProjects()` - 获取项目列表
-
-## 数据流
-
-### 整体数据流
-
-```
-用户操作
-    ↓
-组件 (Canvas, PropertyPanel, Timeline, NodeTree)
-    ↓
-Element Store (核心数据源) ← 所有元素数据操作
-    ↓
-Canvas Store (视图层，计算属性代理) ← 保持向后兼容
-    ↓
-其他 Store (Animation, NodeTree) ← 从 Element Store 获取数据
-    ↓
-组件响应式更新
-```
-
-### 元素数据流
-
-```
-Element Store (单一数据源)
-    ├── elements: Map<string, CanvasElement>
-    └── selectedElementIds: string[]
-         ↓
-Canvas Store (代理层)
-    ├── elements (computed) → elementStore.elementsArray
-    ├── selectedElementIds (computed) → elementStore.selectedElementIds
-    └── selectedElements (computed) → elementStore.selectedElements
-         ↓
-组件层
-    ├── Canvas.vue → canvasStore.elements
-    ├── PropertyPanel.vue → canvasStore.selectedElements
-    └── NodeTree.vue → elementStore.createElement()
-```
-
-### 选中状态流
-
-```
-用户点击元素
-    ↓
-elementStore.selectElement(id)
-    ↓
-selectedElementIds 更新
-    ↓
-selectedElements (computed) 自动更新
-    ↓
-Canvas Store (代理)
-    ↓
-所有使用 canvasStore.selectedElements 的组件自动更新
-```
-
-### 元素创建流
-
-```
-NodeTree.vue: addElement()
-    ↓
-elementStore.createElement(data)
-    ↓
-elements Map 更新
-    ↓
-elementsArray (computed) 自动更新
-    ↓
-Canvas Store.elements (computed) 自动更新
-    ↓
-Canvas.vue 自动渲染新元素
-```
-
-### 元素更新流
-
-```
-PropertyPanel.vue: 修改属性
-    ↓
-elementStore.updateElement(id, updates)
-    ↓
-elements Map 更新
-    ↓
-elementsArray (computed) 自动更新
-    ↓
-Canvas.vue 自动更新元素样式
-```
-
-## 模块依赖关系
-
-```
-Element Store (核心)
-    ↑
-    ├── Canvas Store (代理层)
-    ├── NodeTree Store (构建树形结构)
-    └── Project Store (保存/加载)
-         ↓
-Animation Store (独立，按元素ID存储tracks)
-         ↓
-UI Store (独立，全局UI状态)
-```
-
-## 关键设计决策
-
-1. **单一数据源**: Element Store 作为所有元素数据的唯一来源，避免数据不一致
-2. **数据与业务逻辑分离**: Element Store 只管理数据（CRUD），Animation Store 只管理业务逻辑，通过 Element Store 操作数据
-3. **向后兼容**: Canvas Store 通过计算属性代理，保持原有 API，避免大规模重构
-4. **性能优化**: 使用 Map 存储元素，查找性能 O(1)
-5. **响应式设计**: 使用 Vue 计算属性，自动响应数据变化
-6. **类型安全**: 完整的 TypeScript 类型支持
-7. **默认样式值**: 新元素创建时自动应用所有可动画属性的默认值（从 `ANIMATABLE_PROPERTIES` 获取）

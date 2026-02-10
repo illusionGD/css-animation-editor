@@ -2,11 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { TreeNode } from '@/types'
 import { useElementStore } from './elementStore'
-import { useAnimationStore } from './animationStore'
 
 export const useNodeTreeStore = defineStore('nodeTree', () => {
   const elementStore = useElementStore()
-  const animationStore = useAnimationStore()
   const nodes = ref<TreeNode[]>([])
   const selectedNodeId = ref<string | null>(null)
   const expandedNodeIds = ref<Set<string>>(new Set())
@@ -16,7 +14,7 @@ export const useNodeTreeStore = defineStore('nodeTree', () => {
     return findNodeById(selectedNodeId.value)
   })
 
-  // 方法
+  /** 根据 ID 查找节点 */
   function findNodeById(id: string | null): TreeNode | null {
     if (!id) return null
     function search(nodes: TreeNode[]): TreeNode | null {
@@ -40,45 +38,46 @@ export const useNodeTreeStore = defineStore('nodeTree', () => {
     // 获取根元素
     const rootElements = elementStore.getRootElements()
 
-    /**
-     * 递归构建树节点
-     * @param element 元素
-     * @param depth 当前深度
-     * @returns 树节点
-     */
-    function buildNode(
-      element: ReturnType<typeof elementStore.getElement>,
-      depth: number
-    ): TreeNode | null {
-      if (!element || depth > maxDepth) return null
-
-      const node: TreeNode = {
-        id: element.id,
-        name: element.name || element.type,
-        type: 'element' as const,
-        elementId: element.id,
-        expanded: expandedNodeIds.value.has(element.id),
-        visible: element.visible !== false,
-        locked: element.locked || false
-      }
-
-      // 只构建展开节点的子节点（性能优化：懒加载）
-      if (node.expanded || depth === 0) {
-        const children = elementStore.getChildren(element.id)
-        if (children.length > 0) {
-          node.children = children
-            .map(child => buildNode(child, depth + 1))
-            .filter((n): n is TreeNode => n !== null)
-        }
-      }
-
-      return node
-    }
-
     // 构建根节点
     nodes.value = rootElements
-      .map(element => buildNode(element, 0))
+      .map(element => buildNode(element, 0, maxDepth))
       .filter((n): n is TreeNode => n !== null)
+  }
+
+  /**
+   * 递归构建树节点
+   * @param element 元素
+   * @param depth 当前深度
+   * @returns 树节点
+   */
+  function buildNode(
+    element: ReturnType<typeof elementStore.getElement>,
+    depth: number,
+    maxDepth = 10
+  ): TreeNode | null {
+    if (!element || depth > maxDepth) return null
+
+    const node: TreeNode = {
+      id: element.id,
+      name: element.name || element.type,
+      type: 'element' as const,
+      elementId: element.id,
+      expanded: expandedNodeIds.value.has(element.id),
+      visible: element.visible !== false,
+      locked: element.locked || false
+    }
+
+    // 只构建展开节点的子节点（性能优化：懒加载）
+    if (node.expanded || depth === 0) {
+      const children = elementStore.getChildren(element.id)
+      if (children.length > 0) {
+        node.children = children
+          .map(child => buildNode(child, depth + 1))
+          .filter((n): n is TreeNode => n !== null)
+      }
+    }
+
+    return node
   }
 
   /**
@@ -96,8 +95,6 @@ export const useNodeTreeStore = defineStore('nodeTree', () => {
     const node = findNodeById(nodeId)
     if (node?.elementId) {
       elementStore.selectElement(node.elementId)
-      // 同步设置动画 store 的选中元素
-      animationStore.setSelectedElement(node.elementId)
     }
   }
 
@@ -116,11 +113,6 @@ export const useNodeTreeStore = defineStore('nodeTree', () => {
     }
   }
 
-  // 监听画布元素变化，同步更新节点树
-  function syncWithCanvas() {
-    buildTreeFromElements()
-  }
-
   return {
     // 状态
     nodes,
@@ -134,7 +126,6 @@ export const useNodeTreeStore = defineStore('nodeTree', () => {
     expandNode,
     selectNode,
     toggleExpand,
-    updateNode,
-    syncWithCanvas
+    updateNode
   }
 })

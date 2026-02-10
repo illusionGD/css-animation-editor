@@ -4,7 +4,7 @@
  */
 
 /** 动画默认时长（毫秒） */
-export const ANIMATION_DEFAULT_DURATION = 1000
+export const ANIMATION_DEFAULT_DURATION = 3000
 
 /** 动画默认延迟（毫秒） */
 export const ANIMATION_DEFAULT_DELAY = 0
@@ -27,5 +27,3 @@ export const ANIMATION_MIN_DURATION = 100
 /** 动画最大时长（毫秒） */
 export const ANIMATION_MAX_DURATION = 10000
 
-/** UI 设置中的默认动画时长（毫秒） */
-export const ANIMATION_UI_DEFAULT_DURATION = 3000

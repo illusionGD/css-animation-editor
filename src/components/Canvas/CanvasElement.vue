@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { interpolateKeyframes, parseStyleValue } from '@/utils/calculators'
 import {
   ELEMENT_DEFAULT_WIDTH,
@@ -31,12 +31,16 @@ import {
   ELEMENT_DEFAULT_WIDTH_PX,
   ELEMENT_DEFAULT_HEIGHT_PX,
   CANVAS_DEFAULT_WIDTH,
-  CANVAS_DEFAULT_HEIGHT
+  CANVAS_DEFAULT_HEIGHT,
+  SUPPORTED_CSS_PROPERTIES
 } from '@/constants'
-import type { CanvasElement as CanvasElementType } from '@/types'
+import type { ElementType, CSSProperties, CSSProperty } from '@/types'
 
 interface Props {
-  element: CanvasElementType
+  element: {
+    id: string
+    style: CSSProperties
+  }
   selected: boolean
   canvasZoom?: number
   canvasOffsetX?: number
@@ -49,9 +53,8 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   select: [elementId: string, multi: boolean]
-  update: [elementId: string, updates: Partial<CanvasElementType>]
+  update: [elementId: string, updates: CSSProperties]
 }>()
-
 
 // 获取元素的宽高（从 style 中读取）
 const elementWidth = computed(() =>
@@ -61,22 +64,69 @@ const elementHeight = computed(() =>
   parseStyleValue(props.element.style.height, ELEMENT_DEFAULT_HEIGHT)
 )
 
-const elementStyle = computed(() => {
-  // 从 style 中获取宽高，如果没有则使用默认值
-  const width = props.element.style.width || ELEMENT_DEFAULT_WIDTH_PX
-  const height = props.element.style.height || ELEMENT_DEFAULT_HEIGHT_PX
-
-  // 确保宽高是字符串格式（如果是数字则添加 px）
-  const widthStr = typeof width === 'number' ? `${width}px` : String(width)
-  const heightStr = typeof height === 'number' ? `${height}px` : String(height)
-  const style = {
-    ...props.element.style,
-    position: 'absolute' as const,
-    left: `${props.element.position.x}px`,
-    top: `${props.element.position.y}px`,
-    width: widthStr,
-    height: heightStr
+function formatPropertyValue(
+  type: 'number' | 'color' | 'string' | 'percentage',
+  value: string | number,
+  unit?: string
+): string {
+  if (type === 'color' || type === 'string') {
+    return String(value)
   }
+
+  if (type === 'percentage') {
+    if (typeof value === 'number') return `${value}%`
+    return String(value)
+  }
+
+  if (typeof value === 'number') {
+    return unit ? `${value}${unit}` : `${value}`
+  }
+
+  return String(value)
+}
+
+function getMergeableFunctionName(propName: string): string {
+  if (propName === 'hueRotate') return 'hue-rotate'
+  return propName
+}
+
+const elementStyle = computed(() => {
+  if (!props.element) return {}
+
+  const style: Record<string, string | number> = {}
+
+  const elementStyle = props.element.style || {}
+
+  SUPPORTED_CSS_PROPERTIES.forEach(group => {
+    if (group.mergeable) {
+      const mergedParts: string[] = []
+
+      group.children.forEach(prop => {
+        const rawValue = elementStyle[prop.props]
+        if (rawValue === undefined || rawValue === null || rawValue === '') return
+
+        const formattedValue = formatPropertyValue(prop.type, rawValue, prop.unit)
+        const functionName = getMergeableFunctionName(prop.props)
+        mergedParts.push(`${functionName}(${formattedValue})`)
+      })
+
+      if (mergedParts.length > 0) {
+        style[group.props] = mergedParts.join(' ')
+      } else if (typeof elementStyle[group.props] === 'string') {
+        style[group.props] = elementStyle[group.props] as string
+      }
+
+      return
+    }
+
+    group.children.forEach(prop => {
+      const rawValue = elementStyle[prop.props]
+      if (rawValue === undefined || rawValue === null || rawValue === '') return
+
+      style[prop.props] = formatPropertyValue(prop.type, rawValue, prop.unit)
+    })
+  })
+
   return style
 })
 
@@ -102,8 +152,8 @@ function handleMouseDown(e: MouseEvent) {
   dragStart.value = {
     x: e.clientX,
     y: e.clientY,
-    elementX: props.element.position.x,
-    elementY: props.element.position.y
+    elementX: Number(props.element.style.left),
+    elementY: Number(props.element.style.top)
   }
 
   document.addEventListener('mousemove', handleDrag)
@@ -119,8 +169,8 @@ function handleDrag(e: MouseEvent) {
 
   const rect = canvasElement.getBoundingClientRect()
   const zoom = props.canvasZoom || 1
-  const offsetX = props.canvasOffsetX || 0
-  const offsetY = props.canvasOffsetY || 0
+  const offsetX = 0
+  const offsetY = 0
 
   // 计算当前鼠标在画布坐标系中的位置
   const currentCanvasX = (e.clientX - rect.left - offsetX) / zoom
@@ -142,11 +192,9 @@ function handleDrag(e: MouseEvent) {
   const maxX = (props.canvasWidth || CANVAS_DEFAULT_WIDTH) - elementWidth.value
   const maxY = (props.canvasHeight || CANVAS_DEFAULT_HEIGHT) - elementHeight.value
 
-  emit('update', props.element.id, {
-    position: {
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
-    }
+  updateElementStyle({
+    left: Math.max(0, Math.min(newX, maxX)),
+    top: Math.max(0, Math.min(newY, maxY))
   })
 }
 
@@ -174,8 +222,8 @@ function startResize(handle: string, e: MouseEvent) {
     y: e.clientY,
     width: elementWidth.value,
     height: elementHeight.value,
-    elementX: props.element.position.x,
-    elementY: props.element.position.y
+    elementX: Number(props.element.style.left),
+    elementY: Number(props.element.style.top)
   }
 
   document.addEventListener('mousemove', handleResize)
@@ -191,9 +239,7 @@ function handleResize(e: MouseEvent) {
   const deltaX = (e.clientX - resizeStart.value.x) / zoom
   const deltaY = (e.clientY - resizeStart.value.y) / zoom
 
-  const updates: Partial<CanvasElementType> = {
-    style: { ...props.element.style }
-  }
+  const style = { ...props.element.style }
 
   const newPosition = {
     x: resizeStart.value.elementX,
@@ -202,33 +248,34 @@ function handleResize(e: MouseEvent) {
 
   if (resizeHandle.value.includes('e')) {
     const newWidth = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.width + deltaX)
-    updates.style!.width = `${newWidth}px`
+    style!.width = `${newWidth}px`
   }
 
   if (resizeHandle.value.includes('w')) {
     const newWidth = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.width - deltaX)
     const actualDeltaX = resizeStart.value.width - newWidth
-    updates.style!.width = `${newWidth}px`
+    style!.width = `${newWidth}px`
     newPosition.x = resizeStart.value.elementX + actualDeltaX
   }
 
   if (resizeHandle.value.includes('s')) {
     const newHeight = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.height + deltaY)
-    updates.style!.height = `${newHeight}px`
+    style!.height = `${newHeight}px`
   }
 
   if (resizeHandle.value.includes('n')) {
     const newHeight = Math.max(ELEMENT_MIN_SIZE, resizeStart.value.height - deltaY)
     const actualDeltaY = resizeStart.value.height - newHeight
-    updates.style!.height = `${newHeight}px`
+    style!.height = `${newHeight}px`
     newPosition.y = resizeStart.value.elementY + actualDeltaY
   }
 
   if (resizeHandle.value.includes('w') || resizeHandle.value.includes('n')) {
-    updates.position = newPosition
+    style!.left = newPosition.x
+    style!.top = newPosition.y
   }
 
-  emit('update', props.element.id, updates)
+  updateElementStyle(style)
 }
 
 function stopResize() {
@@ -238,6 +285,10 @@ function stopResize() {
   document.removeEventListener('mouseup', stopResize)
 }
 //#endregion
+
+function updateElementStyle(updates: CSSProperties) {
+  emit('update', props.element.id, updates)
+}
 </script>
 
 <style lang="scss" scoped>

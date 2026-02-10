@@ -2,26 +2,29 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AnimationTrack, Keyframe } from '@/types'
 import { useElementStore } from './elementStore'
-import { ANIMATION_UI_DEFAULT_DURATION, ANIMATION_MIN_DURATION } from '@/constants'
+import { ANIMATION_DEFAULT_DURATION, ANIMATION_MIN_DURATION } from '@/constants'
 
 export const useAnimationStore = defineStore('animation', () => {
   // 状态
   const isPlaying = ref(false)
   const currentTime = ref(0)
-  const duration = ref(ANIMATION_UI_DEFAULT_DURATION)
-  const selectedElementId = ref<string | null>(null)
+  const duration = ref(ANIMATION_DEFAULT_DURATION)
   // 选中的关键帧：{ property: string, keyframeIndex: number } | null
   const selectedKeyframe = ref<{ property: string; keyframeIndex: number } | null>(null)
 
   // 获取 elementStore
   const elementStore = useElementStore()
 
+  const animationConfig = computed(() => {
+    return elementStore.selectedElements[0].animation 
+  })
+
   // 计算属性：当前选中元素的tracks（从 elementStore 获取）
   const tracks = computed(() => {
-    if (!selectedElementId.value) {
-      return []
+    if (elementStore.selectedElements.length === 0) {
+        return []
     }
-    return elementStore.getElementTracks(selectedElementId.value)
+    return elementStore.selectedElements[0].animation.tracks
   })
 
   const currentProgress = computed(() => {
@@ -33,36 +36,34 @@ export const useAnimationStore = defineStore('animation', () => {
     duration.value = Math.max(ANIMATION_MIN_DURATION, newDuration)
   }
 
-  function setSelectedElement(elementId: string | null) {
-    selectedElementId.value = elementId
-  }
-
   // ========== 动画轨道管理（业务逻辑） ==========
-
   /**
    * 添加动画轨道
    */
   function addTrack(property: string) {
-    if (!selectedElementId.value) return
-
-    const element = elementStore.getElement(selectedElementId.value)
-    if (!element) return
-
-    const tracks = element.tracks || []
-    // 检查是否已存在该属性的轨道
-    if (tracks.find(t => t.property === property)) {
-      return
+    const currentElement = elementStore.selectedElements[0]
+    if (!currentElement) {
+        return
     }
+    const frames = currentElement.animation.tracks
 
-    const newTrack: AnimationTrack = {
+    const defaultVal = currentElement.style[property]
+    frames.push({
       property,
-      keyframes: [],
+      keyframes: [
+        {
+            time: 0,
+            value: defaultVal
+        }
+      ],
       duration: duration.value
+    })
+    const newAnimation = {
+        ...currentElement.animation,
+        keyframes: frames
     }
-
-    // 通过 elementStore 更新元素数据
-    elementStore.updateElement(selectedElementId.value, {
-      tracks: [...tracks, newTrack]
+    elementStore.updateElement(currentElement.id, {
+        animation: newAnimation
     })
   }
 
@@ -70,16 +71,17 @@ export const useAnimationStore = defineStore('animation', () => {
    * 删除动画轨道
    */
   function removeTrack(property: string) {
-    if (!selectedElementId.value) return
-
-    const element = elementStore.getElement(selectedElementId.value)
-    if (!element) return
-
-    const tracks = element.tracks || []
-    const filteredTracks = tracks.filter(t => t.property !== property)
-
-    elementStore.updateElement(selectedElementId.value, {
-      tracks: filteredTracks
+    const currentElement = elementStore.selectedElements[0]
+    if (!currentElement) {
+        return
+    }
+    const frames = currentElement.animation.tracks.filter(track => track.property !== property)
+    const newAnimation = {
+        ...currentElement.animation,
+        tracks: frames
+    }
+    elementStore.updateElement(currentElement.id, {
+        animation: newAnimation
     })
   }
 
@@ -87,95 +89,23 @@ export const useAnimationStore = defineStore('animation', () => {
    * 添加关键帧
    */
   function addKeyframe(property: string, keyframe: Keyframe) {
-    if (!selectedElementId.value) return
 
-    const element = elementStore.getElement(selectedElementId.value)
-    if (!element) return
-
-    const tracks = element.tracks || []
-    const track = tracks.find(t => t.property === property)
-    if (!track) return
-
-    const newKeyframes = [...track.keyframes, keyframe]
-    newKeyframes.sort((a, b) => a.time - b.time)
-
-    const updatedTracks = tracks.map(t =>
-      t.property === property ? { ...t, keyframes: newKeyframes } : t
-    )
-
-    elementStore.updateElement(selectedElementId.value, {
-      tracks: updatedTracks
-    })
   }
 
   /**
    * 删除关键帧
    */
-  function removeKeyframe(property: string, keyframeIndex: number) {
-    if (!selectedElementId.value) return
-
-    const element = elementStore.getElement(selectedElementId.value)
-    if (!element) return
-
-    const tracks = element.tracks || []
-    const track = tracks.find(t => t.property === property)
-    if (!track || keyframeIndex < 0 || keyframeIndex >= track.keyframes.length) return
-
-    const newKeyframes = track.keyframes.filter((_, index) => index !== keyframeIndex)
-    const updatedTracks = tracks.map(t =>
-      t.property === property ? { ...t, keyframes: newKeyframes } : t
-    )
-
-    elementStore.updateElement(selectedElementId.value, {
-      tracks: updatedTracks
-    })
-  }
+  function removeKeyframe(property: string, keyframeIndex: number) {}
 
   /**
    * 更新关键帧
    */
-  function updateKeyframe(property: string, keyframeIndex: number, updates: Partial<Keyframe>) {
-    if (!selectedElementId.value) return
-
-    const element = elementStore.getElement(selectedElementId.value)
-    if (!element) return
-
-    const tracks = element.tracks || []
-    const track = tracks.find(t => t.property === property)
-    if (!track || keyframeIndex < 0 || keyframeIndex >= track.keyframes.length) return
-
-    const newKeyframes = track.keyframes.map((kf, index) =>
-      index === keyframeIndex ? { ...kf, ...updates } : kf
-    )
-    newKeyframes.sort((a, b) => a.time - b.time)
-
-    const updatedTracks = tracks.map(t =>
-      t.property === property ? { ...t, keyframes: newKeyframes } : t
-    )
-
-    elementStore.updateElement(selectedElementId.value, {
-      tracks: updatedTracks
-    })
-  }
+  function updateKeyframe(property: string, keyframeIndex: number, updates: Partial<Keyframe>) {}
 
   /**
    * 更新轨道时长
    */
-  function updateTrackDuration(property: string, newDuration: number) {
-    if (!selectedElementId.value) return
-
-    const element = elementStore.getElement(selectedElementId.value)
-    if (!element) return
-
-    const tracks = element.tracks || []
-    const updatedTracks = tracks.map(t =>
-      t.property === property ? { ...t, duration: newDuration } : t
-    )
-
-    elementStore.updateElement(selectedElementId.value, {
-      tracks: updatedTracks
-    })
-  }
+  function updateTrackDuration(property: string, newDuration: number) {}
 
   function play() {
     isPlaying.value = true
@@ -195,20 +125,12 @@ export const useAnimationStore = defineStore('animation', () => {
   }
 
   // 获取指定元素的tracks（用于动画预览，从 elementStore 获取）
-  function getElementTracks(elementId: string): AnimationTrack[] {
-    return elementStore.getElementTracks(elementId)
-  }
+  function getElementTracks(elementId: string) {}
 
   /**
    * 设置选中的关键帧
    */
-  function setSelectedKeyframe(property: string | null, keyframeIndex: number | null) {
-    if (property !== null && keyframeIndex !== null) {
-      selectedKeyframe.value = { property, keyframeIndex }
-    } else {
-      selectedKeyframe.value = null
-    }
-  }
+  function setSelectedKeyframe(property: string | null, keyframeIndex: number | null) {}
 
   /**
    * 清除选中的关键帧
@@ -223,13 +145,12 @@ export const useAnimationStore = defineStore('animation', () => {
     currentTime,
     duration,
     tracks,
-    selectedElementId,
     selectedKeyframe,
     // 计算属性
     currentProgress,
+    animationConfig,
     // 方法
     setDuration,
-    setSelectedElement,
     addTrack,
     removeTrack,
     addKeyframe,

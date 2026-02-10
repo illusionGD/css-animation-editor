@@ -2,23 +2,14 @@
   <div class="node-tree">
     <div class="node-tree-header">
       <div class="header-top">
-        <n-input
-          v-model:value="searchQuery"
-          placeholder="搜索节点..."
-          clearable
-          size="small"
-        >
+        <n-input v-model:value="searchQuery" placeholder="搜索节点..." clearable size="small">
           <template #prefix>
             <n-icon>
               <SearchIcon />
             </n-icon>
           </template>
         </n-input>
-        <n-button
-          type="primary"
-          size="small"
-          @click="handleAddElement"
-        >
+        <n-button type="primary" size="small" @click="handleAddElement">
           <template #icon>
             <n-icon>
               <AddIcon />
@@ -27,10 +18,7 @@
         </n-button>
       </div>
     </div>
-    <div
-      class="node-tree-content"
-      @click="handleContentClick"
-    >
+    <div class="node-tree-content" @click="handleContentClick">
       <template v-if="filteredNodes.length > 0">
         <div class="normal-tree-wrapper">
           <n-tree
@@ -45,10 +33,7 @@
           />
         </div>
       </template>
-      <n-empty
-        v-else
-        description="暂无节点"
-      />
+      <n-empty v-else description="暂无节点" />
     </div>
     <!-- 重命名弹窗 -->
     <n-modal
@@ -74,11 +59,10 @@ import { ref, computed, watch, h } from 'vue'
 import { NInput, NIcon, NTree, NEmpty, NButton, NModal, useMessage, useDialog } from 'naive-ui'
 import { useNodeTreeStore } from '@/stores/nodeTreeStore'
 import { useElementStore } from '@/stores/elementStore'
-import { useAnimationStore } from '@/stores/animationStore'
 import { parseStyleValue } from '@/utils/calculators'
 import { ELEMENT_DEFAULT_WIDTH, ELEMENT_DEFAULT_HEIGHT } from '@/constants'
 import { Search, Add, Trash, Create } from '@vicons/ionicons5'
-import type { TreeNode, CanvasElement } from '@/types'
+import type { TreeNode, ElementType } from '@/types'
 import { useGlobalStore } from '@/stores/globalStore'
 
 const SearchIcon = Search
@@ -89,7 +73,6 @@ const CreateIcon = Create
 const nodeTreeStore = useNodeTreeStore()
 const globalStore = useGlobalStore()
 const elementStore = useElementStore()
-const animationStore = useAnimationStore()
 
 const message = useMessage()
 const dialog = useDialog()
@@ -101,8 +84,6 @@ const editingNodeId = ref<string | null>(null)
 const editingNodeName = ref('')
 const showRenameModal = ref(false)
 
-// 是否有选中的元素（用于显示"添加子元素"按钮）
-const hasSelectedElement = computed(() => elementStore.hasSelection)
 
 // 将TreeNode转换为Tree组件需要的格式
 const treeData = computed(() => {
@@ -230,15 +211,13 @@ watch(
 
 // 同步画布元素变化
 watch(
-  () => elementStore.elementsArray,
+  () => elementStore.elementsArray.length,
   () => {
-    nodeTreeStore.syncWithCanvas()
+    nodeTreeStore.buildTreeFromElements()
   },
-  { deep: true }
+  { immediate: true }
 )
 
-// 初始化
-nodeTreeStore.syncWithCanvas()
 expandedKeys.value = Array.from(nodeTreeStore.expandedNodeIds)
 
 function handleSelect(keys: string[]) {
@@ -246,8 +225,7 @@ function handleSelect(keys: string[]) {
     nodeTreeStore.selectNode(keys[0])
   } else {
     elementStore.clearSelection()
-    // 清除选择时，也要清除动画 store 的选中元素
-    animationStore.setSelectedElement(null)
+
   }
 }
 
@@ -257,7 +235,6 @@ function handleContentClick(e: MouseEvent) {
   const treeNode = target.closest('.n-tree-node')
   if (!treeNode) {
     elementStore.clearSelection()
-    animationStore.setSelectedElement(null)
     selectedKeys.value = []
   }
 }
@@ -293,9 +270,9 @@ function addRootElement() {
   const _y = (globalStore.layoutSettings.canvasHeight - _height) / 2
   const elementId = elementStore.createElement({
     type: 'div',
-    position: {
-      x: _x,
-      y: _y
+    style: {
+      left: _x,
+      top: _y
     },
     name: `元素 ${elementStore.elementCount + 1}`
   })
@@ -306,12 +283,12 @@ function addRootElement() {
 /**
  * 添加子元素
  */
-function addChildElement(parentElement: CanvasElement) {
+function addChildElement(parentElement: ElementType) {
   if (!parentElement) return
 
   // 获取父元素的位置和尺寸，子元素放在父元素内部
-  const parentX = parentElement.position.x
-  const parentY = parentElement.position.y
+  const parentX = Number(parentElement.style.left)
+  const parentY = Number(parentElement.style.top)
   // 从 style 中解析宽高
   const parentWidth = parseStyleValue(parentElement.style.width, ELEMENT_DEFAULT_WIDTH)
   const parentHeight = parseStyleValue(parentElement.style.height, ELEMENT_DEFAULT_HEIGHT)
@@ -324,11 +301,11 @@ function addChildElement(parentElement: CanvasElement) {
   const elementId = elementStore.createElement({
     type: 'div',
     parentId: parentElement.id,
-    position: {
-      x: _x,
-      y: _y
+    style: {
+      left: _x,
+      top: _y
     },
-    name: `${parentElement.name || '元素'}-子元素`
+    name: '元素'
   })
 
   // 展开父节点以显示子元素
@@ -352,7 +329,6 @@ function handleDeleteNode(nodeKey: string) {
         // 如果删除的是当前选中的元素，清除选择
         if (selectedKeys.value.includes(nodeKey)) {
           elementStore.clearSelection()
-          animationStore.setSelectedElement(null)
         }
       }
     }
@@ -396,6 +372,7 @@ function confirmRename() {
   editingNodeId.value = null
   editingNodeName.value = ''
   showRenameModal.value = false
+  nodeTreeStore.buildTreeFromElements()
   return true
 }
 

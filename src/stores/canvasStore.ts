@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { formatDecimal } from '@/utils/formatters'
 import { useElementStore } from './elementStore'
 import {
@@ -10,6 +10,14 @@ import {
   CANVAS_DEFAULT_SHOW_GRID,
   CANVAS_DEFAULT_SHOW_RULER
 } from '@/constants'
+import { ElementType, CSSProperties } from '@/types'
+interface NodeType {
+  id: string
+  style: CSSProperties
+  children: NodeType[]
+  order: number
+  parentId?: string
+}
 
 export const useCanvasStore = defineStore('canvas', () => {
   const elementStore = useElementStore()
@@ -24,38 +32,73 @@ export const useCanvasStore = defineStore('canvas', () => {
     offsetY: CANVAS_DEFAULT_OFFSET_Y
   })
 
+  const elements = ref<NodeType[]>([])
+
   // 计算属性：从 elementStore 获取元素数据（保持向后兼容）
-  const elements = computed(() => elementStore.elementsArray)
   const selectedElementIds = computed(() => elementStore.selectedElementIds)
   const selectedElements = computed(() => elementStore.selectedElements)
   const hasSelection = computed(() => elementStore.hasSelection)
 
-  // 方法：代理到 elementStore（保持向后兼容）
-  function addElement(element: Parameters<typeof elementStore.createElement>[0]) {
-    elementStore.createElement(element)
+  watch(
+    () => elementStore.elementsArray.length,
+    () => {
+      buildElementTree()
+    }
+  )
+
+  // 构建树形结构
+  function buildElementTree() {
+    let maxLevel = 0
+    const levelMap: Record<number, NodeType[]> = {}
+    elementStore.elements.forEach(el => {
+      maxLevel = Math.max(maxLevel, el.level)
+      if (!levelMap[el.level]) {
+        levelMap[el.level] = []
+      }
+      levelMap[el.level].push({
+        id: el.id,
+        style: el.style,
+        parentId: el.parentId,
+        order: el.order,
+        children: [] // 子元素将在后续构建树形结构时填充
+      })
+    })
+
+    for (let index = 0; index < maxLevel; index++) {
+      const currentLevelElements = levelMap[index] || []
+      currentLevelElements.forEach(el => {
+        const children: NodeType[] = []
+        levelMap[index + 1]?.forEach(child => {
+          if (child.parentId === el.id) {
+            children.push(child)
+          }
+        })
+        el.children = children
+        return el
+      })
+    }
+    elements.value = levelMap[0] || []
+    return elements.value
   }
 
-  function removeElement(elementId: string) {
-    elementStore.deleteElement(elementId)
+  function getElementById(id: string): NodeType | null {
+    function search(nodes: NodeType[]): NodeType | null {
+      for (const node of nodes) {
+        if (node.id === id) return node
+        const foundInChildren = search(node.children)
+        if (foundInChildren) return foundInChildren
+      }
+      return null
+    }
+    return search(elements.value)
   }
 
-  function updateElement(
-    elementId: string,
-    updates: Parameters<typeof elementStore.updateElement>[1]
-  ) {
-    elementStore.updateElement(elementId, updates)
-  }
-
-  function selectElement(elementId: string | string[], multi = false) {
-    elementStore.selectElement(elementId, multi)
-  }
-
-  function deselectElement(elementId: string | string[]) {
-    elementStore.deselectElement(elementId)
-  }
-
-  function clearSelection() {
-    elementStore.clearSelection()
+  //   更新元素样式
+  function updateElementStyle(id: string, style: CSSProperties) {
+    const element = getElementById(id)
+    if (element) {
+      element.style = { ...element.style, ...style }
+    }
   }
 
   function updateCanvasConfig(config: Partial<typeof canvasConfig.value>) {
@@ -74,13 +117,12 @@ export const useCanvasStore = defineStore('canvas', () => {
     // 计算属性
     selectedElements, // 计算属性：从 elementStore 获取
     hasSelection, // 计算属性：从 elementStore 获取
-    // 方法（代理到 elementStore，保持向后兼容）
-    addElement,
-    removeElement,
-    updateElement,
-    selectElement,
-    deselectElement,
-    clearSelection,
-    updateCanvasConfig
+    updateCanvasConfig,
+    /**
+     * 构建元素树形结构
+     */
+    buildElementTree,
+
+    updateElementStyle
   }
 })

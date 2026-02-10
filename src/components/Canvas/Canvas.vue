@@ -19,7 +19,7 @@
         @click="handleClick"
       >
         <CanvasElement
-          v-for="element in elements"
+          v-for="element in canvasStore.elements"
           :key="element.id"
           :element="element"
           :selected="isSelected(element.id)"
@@ -29,7 +29,7 @@
           :canvas-width="globalStore.layoutSettings.canvasWidth"
           :canvas-height="globalStore.layoutSettings.canvasHeight"
           @select="handleElementSelect"
-          @update="handleElementUpdate"
+          @update="handleElementStyleUpdate"
         />
         <!-- <SelectionBox
             v-if="selectionBox"
@@ -41,19 +41,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useCanvasStore } from '@/stores/canvasStore'
-import { useAnimationStore } from '@/stores/animationStore'
 import { clamp } from '@/utils/calculators'
 import { CANVAS_DEFAULT_OFFSET_X, CANVAS_DEFAULT_OFFSET_Y } from '@/constants'
 import CanvasGrid from './CanvasGrid.vue'
 import CanvasElement from './CanvasElement.vue'
-import type { CanvasElement as CanvasElementType } from '@/types'
+import {  CSSProperties } from '@/types'
 import { useGlobalStore } from '@/stores/globalStore'
-
+import { useElementStore } from '@/stores/elementStore'
 const canvasStore = useCanvasStore()
+const elementStore = useElementStore()
 const globalStore = useGlobalStore()
-const animationStore = useAnimationStore()
 
 const containerRef = ref<HTMLElement>()
 const selectionBox = ref<{ x: number; y: number; width: number; height: number } | null>(null)
@@ -64,7 +63,7 @@ const panStart = ref({ x: 0, y: 0, offsetX: 0, offsetY: 0 })
 const isInitialized = ref(false)
 
 const canvasConfig = computed(() => canvasStore.canvasConfig)
-const elements = computed(() => canvasStore.elements)
+
 const isDark = computed(() => {
   // 通过检查theme是否为null来判断是否为暗色主题
   return globalStore.themeSettings.isDarkMode
@@ -164,7 +163,7 @@ function handleMouseUp(e: MouseEvent) {
 function handleClick(e: MouseEvent) {
   // 如果点击的是画布空白区域，清除选择
   if ((e.target as HTMLElement).classList.contains('canvas')) {
-    canvasStore.clearSelection()
+    elementStore.clearSelection()
   }
 }
 
@@ -177,15 +176,12 @@ function handleSelectionEnd(e: MouseEvent) {
 }
 
 function handleElementSelect(elementId: string, multi: boolean) {
-  canvasStore.selectElement(elementId, multi)
-  // 同步设置动画 store 的选中元素
-  if (!multi) {
-    animationStore.setSelectedElement(elementId)
-  }
+  elementStore.selectElement(elementId, multi)
 }
 
-function handleElementUpdate(elementId: string, updates: Partial<CanvasElementType>) {
-  canvasStore.updateElement(elementId, updates)
+function handleElementStyleUpdate(elementId: string, styles: CSSProperties) {
+  elementStore.updateElementStyle(elementId, styles)
+  canvasStore.updateElementStyle(elementId, styles)
 }
 
 // 初始化画布缩放，使其适应视图

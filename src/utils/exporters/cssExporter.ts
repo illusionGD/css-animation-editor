@@ -1,7 +1,7 @@
-import type { CanvasElement, AnimationConfig } from '@/types'
+import type { ElementType, AnimationConfig } from '@/types'
 import { ANIMATION_DEFAULT_DURATION } from '@/constants'
 
-export function exportCSS(elements: CanvasElement[]): string {
+export function exportCSS(elements: ElementType[]): string {
   let css = ''
 
   elements.forEach((element, index) => {

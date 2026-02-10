@@ -4,18 +4,18 @@ export interface CSSProperties {
   [key: string]: string | number
 }
 
-export interface CanvasElement {
+export interface ElementType {
   id: string
   type: 'div' | 'span' | 'img' | 'custom'
   style: CSSProperties
   animation: AnimationConfig
-  position: { x: number; y: number }
-  name?: string
+  name: string
+  /** 层级 */
+  level: number
+  order: number // 同级元素的排序顺序
   visible?: boolean
   locked?: boolean
   parentId?: string // 父元素ID，用于构建树形结构
-  order?: number // 同级元素的排序顺序
-  tracks?: AnimationTrack[] // 动画轨道数组，每个轨道对应一个CSS属性
 }
 
 export interface AnimationConfig {
@@ -25,7 +25,7 @@ export interface AnimationConfig {
   direction: 'normal' | 'reverse' | 'alternate' | 'alternate-reverse'
   fillMode: 'none' | 'forwards' | 'backwards' | 'both'
   easing: string
-  keyframes: Keyframe[]
+  tracks: AnimationTrack[]
 }
 
 export interface Keyframe {
@@ -84,7 +84,7 @@ export interface Project {
 }
 
 export interface ProjectData {
-  elements: CanvasElement[]
+  elements: ElementType[]
   animations: AnimationConfig[]
   settings: ProjectSettings
 }

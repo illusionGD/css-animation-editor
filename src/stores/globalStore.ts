@@ -1,5 +1,5 @@
 import {
-  ANIMATION_UI_DEFAULT_DURATION,
+  ANIMATION_DEFAULT_DURATION,
   CANVAS_DEFAULT_BACKGROUND_COLOR,
   CANVAS_DEFAULT_HEIGHT,
   CANVAS_DEFAULT_WIDTH
@@ -63,7 +63,7 @@ export const useGlobalStore = defineStore('global', () => {
 
   const exportSettings = ref<ExportSettings>({
     exportFormat: EXPORT_FORMAT_DEFAULT as 'css' | 'html' | 'json',
-    defaultDuration: ANIMATION_UI_DEFAULT_DURATION,
+    defaultDuration: ANIMATION_DEFAULT_DURATION,
     autoSave: true,
     codeFormat: true,
     minifyCode: false
@@ -144,7 +144,7 @@ export const useGlobalStore = defineStore('global', () => {
   function resetExportSettings() {
     exportSettings.value = {
       exportFormat: EXPORT_FORMAT_DEFAULT as 'css' | 'html' | 'json',
-      defaultDuration: ANIMATION_UI_DEFAULT_DURATION,
+      defaultDuration: ANIMATION_DEFAULT_DURATION,
       autoSave: true,
       codeFormat: true,
       minifyCode: false

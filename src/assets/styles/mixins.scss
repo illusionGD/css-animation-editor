@@ -52,43 +52,6 @@
     text-overflow: ellipsis;
   }
 }
-
-// Flex 布局 mixin
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@mixin flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-@mixin flex-column {
-  display: flex;
-  flex-direction: column;
-}
-
-// 清除浮动
-@mixin clearfix {
-  &::after {
-    content: '';
-    display: table;
-    clear: both;
-  }
-}
-
-// 绝对居中
-@mixin absolute-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-// 固定宽高比
 @mixin aspect-ratio($width: 16, $height: 9) {
   position: relative;
   overflow: hidden;
@@ -107,6 +70,7 @@
     height: 100%;
   }
 }
+
 
 // 响应式断点
 $breakpoint-xs: 480px;
